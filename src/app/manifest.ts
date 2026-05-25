@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "AFRESH — Global Fashion Movement",
-    short_name: "AFRESH",
+    name: "AfrESH Fashion",
+    short_name: "AfrESH Fashion",
     description:
       "Where heritage meets the future. Fashion as identity, culture as currency. A global fashion movement born from Africa.",
     start_url: "/",

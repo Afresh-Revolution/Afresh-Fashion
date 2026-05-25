@@ -80,9 +80,9 @@ export default function PwaInstallPrompt() {
   const canNativeInstall = Boolean(deferred);
 
   return (
-    <aside className={styles.install} role="dialog" aria-label="Install AFRESH app">
+    <aside className={styles.install} role="dialog" aria-label="Install AfrESH Fashion app">
       <div className={styles.installHeader}>
-        <span className={styles.installTitle}>Install AFRESH</span>
+        <span className={styles.installTitle}>Install AfrESH Fashion</span>
         <button type="button" className={styles.installClose} onClick={dismiss} aria-label="Dismiss">
           ×
         </button>
@@ -90,13 +90,13 @@ export default function PwaInstallPrompt() {
       <p className={styles.installText}>
         {ios ? (
           <>
-            Add AFRESH to your home screen: tap <Share size={12} style={{ display: "inline", verticalAlign: "middle" }} />{" "}
+            Add AfrESH Fashion to your home screen: tap <Share size={12} style={{ display: "inline", verticalAlign: "middle" }} />{" "}
             Share, then <strong>Add to Home Screen</strong>.
           </>
         ) : canNativeInstall ? (
           "Install the app for faster access, full-screen browsing, and offline support."
         ) : (
-          "Install AFRESH from your browser menu — look for Install app, Add to Home screen, or Add to Dock."
+          "Install AfrESH Fashion from your browser menu — look for Install app, Add to Home screen, or Add to Dock."
         )}
       </p>
       <div className={styles.installActions}>

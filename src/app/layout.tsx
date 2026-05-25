@@ -22,7 +22,7 @@ const inter = Inter({
   variable: "--font-body",
 });
 
-const APP_NAME = "AFRESH";
+const APP_NAME = "AfrESH Fashion";
 const APP_TITLE = "AFRESH — Global Fashion Movement Born From Africa";
 const APP_DESCRIPTION =
   "Where heritage meets the future. Fashion as identity, culture as currency. A global fashion movement born from Africa.";
