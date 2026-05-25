@@ -3,19 +3,45 @@
 import { useCallback, useEffect, useState } from "react";
 import MediaUpload from "@/components/admin/MediaUpload";
 import type {
+  AboutSection,
   CinematicSection,
   CinematicVideo,
   CollectionItem,
   CollaboratorItem,
   CommunityItem,
   ContentStatus,
+  DropSection,
   EditorialItem,
+  HeroSection,
   LookbookItem,
   ProductItem,
 } from "@/types/content";
 import styles from "@/styles/admin.module.scss";
 
 type Notify = (msg: string) => void;
+
+type AboutStatRow = {
+  id: string;
+  value_numeric: number | null;
+  is_symbolic: boolean;
+  symbol_text: string | null;
+  label: string;
+  sort_order: number;
+  status: ContentStatus;
+};
+
+type AboutSectionRow = AboutSection & { status: ContentStatus };
+
+type DropRow = DropSection & { id: string; status: ContentStatus; is_active: boolean };
+
+type HeroRow = HeroSection & { status: ContentStatus };
+
+function toDatetimeLocal(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -444,11 +470,46 @@ export function ShopPanel({ notify }: { notify: Notify }) {
               />
             </div>
           </div>
-          <MediaUpload
-            folder="products"
-            currentUrl={item.image_url}
-            onUploaded={(url) => setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, image_url: url } : i)))}
-          />
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Product images (auto-slides every 3s when multiple)</label>
+            {(item.image_urls?.length ?? 0) > 0 && (
+              <div className={styles.productImagesGrid}>
+                {(item.image_urls ?? []).map((url, idx) => (
+                  <div key={`${url}-${idx}`} className={styles.productImageThumb}>
+                    <img src={url} alt="" />
+                    <button
+                      type="button"
+                      className={styles.btnSmall}
+                      onClick={() =>
+                        setItems((prev) =>
+                          prev.map((i) => {
+                            if (i.id !== item.id) return i;
+                            const image_urls = i.image_urls.filter((_, j) => j !== idx);
+                            return { ...i, image_urls, image_url: image_urls[0] ?? null };
+                          })
+                        )
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <MediaUpload
+              folder="products"
+              label="Add image to gallery"
+              onUploaded={(url) =>
+                setItems((prev) =>
+                  prev.map((i) => {
+                    if (i.id !== item.id) return i;
+                    const image_urls = [...(i.image_urls ?? []), url];
+                    return { ...i, image_urls, image_url: i.image_url ?? url };
+                  })
+                )
+              }
+            />
+          </div>
           <ItemActions
             status={item.status}
             onSave={() => void save(item)}
@@ -981,6 +1042,712 @@ export function CinematicPanel({ notify }: { notify: Notify }) {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+export function AboutPanel({ notify }: { notify: Notify }) {
+  const [section, setSection] = useState<AboutSectionRow | null>(null);
+  const [stats, setStats] = useState<AboutStatRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api<{ section: AboutSectionRow | null; stats: AboutStatRow[] }>("/api/admin/about");
+      setSection(data.section);
+      setStats(data.stats);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const saveSection = async () => {
+    if (!section) return;
+    const updated = await api<AboutSectionRow>("/api/admin/about", {
+      method: "PATCH",
+      body: JSON.stringify(section),
+    });
+    setSection(updated);
+    notify("About section saved");
+  };
+
+  const saveStat = async (stat: AboutStatRow) => {
+    const updated = await api<AboutStatRow>(`/api/admin/about/stats/${stat.id}`, {
+      method: "PATCH",
+      body: JSON.stringify(stat),
+    });
+    setStats((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    notify("Stat saved");
+  };
+
+  const addStat = async () => {
+    const created = await api<AboutStatRow>("/api/admin/about/stats", {
+      method: "POST",
+      body: JSON.stringify({
+        label: "New metric",
+        value_numeric: 0,
+        is_symbolic: false,
+        sort_order: stats.length,
+        status: "draft",
+      }),
+    });
+    setStats((prev) => [...prev, created]);
+    notify("Stat added");
+  };
+
+  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (!section) return <p className={styles.empty}>About section not found in database.</p>;
+
+  return (
+    <div className={styles.contentPanel}>
+      <div className={styles.panel}>
+        <p className={styles.panelTitle}>Manifesto copy (#about)</p>
+        <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label>Section label</label>
+            <input
+              value={section.section_label}
+              onChange={(e) => setSection({ ...section, section_label: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Status</label>
+            <StatusSelect value={section.status} onChange={(status) => setSection({ ...section, status })} />
+          </div>
+          <div className={styles.field}>
+            <label>Heading line 1</label>
+            <input
+              value={section.heading_line_1}
+              onChange={(e) => setSection({ ...section, heading_line_1: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Heading line 2</label>
+            <input
+              value={section.heading_line_2}
+              onChange={(e) => setSection({ ...section, heading_line_2: e.target.value })}
+            />
+          </div>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Lead paragraph</label>
+            <textarea
+              value={section.lead_paragraph}
+              onChange={(e) => setSection({ ...section, lead_paragraph: e.target.value })}
+            />
+          </div>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Body paragraph 1</label>
+            <textarea
+              value={section.body_paragraph_1}
+              onChange={(e) => setSection({ ...section, body_paragraph_1: e.target.value })}
+            />
+          </div>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Body paragraph 2</label>
+            <textarea
+              value={section.body_paragraph_2}
+              onChange={(e) => setSection({ ...section, body_paragraph_2: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>CTA label</label>
+            <input
+              value={section.cta_label}
+              onChange={(e) => setSection({ ...section, cta_label: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>CTA link</label>
+            <input
+              value={section.cta_href}
+              onChange={(e) => setSection({ ...section, cta_href: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className={styles.actions}>
+          <button type="button" className={styles.btnPrimary} onClick={() => void saveSection()}>
+            Save manifesto
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.panel}>
+        <div className={styles.panelHeaderRow}>
+          <p className={styles.panelTitle}>Stats row</p>
+          <button type="button" className={styles.btnGhost} onClick={() => void addStat()}>
+            Add stat
+          </button>
+        </div>
+        {stats.map((stat) => (
+          <div key={stat.id} className={styles.contentCard}>
+            <div className={styles.formGrid}>
+              <div className={styles.field}>
+                <label>Label</label>
+                <input
+                  value={stat.label}
+                  onChange={(e) =>
+                    setStats((prev) => prev.map((s) => (s.id === stat.id ? { ...s, label: e.target.value } : s)))
+                  }
+                />
+              </div>
+              <div className={styles.field}>
+                <label>Sort order</label>
+                <input
+                  type="number"
+                  value={stat.sort_order}
+                  onChange={(e) =>
+                    setStats((prev) =>
+                      prev.map((s) => (s.id === stat.id ? { ...s, sort_order: Number(e.target.value) } : s))
+                    )
+                  }
+                />
+              </div>
+              <div className={styles.field}>
+                <label>Type</label>
+                <select
+                  value={stat.is_symbolic ? "symbolic" : "numeric"}
+                  onChange={(e) => {
+                    const symbolic = e.target.value === "symbolic";
+                    setStats((prev) =>
+                      prev.map((s) =>
+                        s.id === stat.id
+                          ? {
+                              ...s,
+                              is_symbolic: symbolic,
+                              symbol_text: symbolic ? s.symbol_text ?? "∞" : null,
+                              value_numeric: symbolic ? null : s.value_numeric ?? 0,
+                            }
+                          : s
+                      )
+                    );
+                  }}
+                >
+                  <option value="numeric">Number</option>
+                  <option value="symbolic">Symbol (∞ etc.)</option>
+                </select>
+              </div>
+              {stat.is_symbolic ? (
+                <div className={styles.field}>
+                  <label>Symbol</label>
+                  <input
+                    value={stat.symbol_text ?? ""}
+                    onChange={(e) =>
+                      setStats((prev) =>
+                        prev.map((s) => (s.id === stat.id ? { ...s, symbol_text: e.target.value } : s))
+                      )
+                    }
+                  />
+                </div>
+              ) : (
+                <div className={styles.field}>
+                  <label>Value</label>
+                  <input
+                    type="number"
+                    value={stat.value_numeric ?? 0}
+                    onChange={(e) =>
+                      setStats((prev) =>
+                        prev.map((s) =>
+                          s.id === stat.id ? { ...s, value_numeric: Number(e.target.value) } : s
+                        )
+                      )
+                    }
+                  />
+                </div>
+              )}
+              <div className={styles.field}>
+                <label>Status</label>
+                <StatusSelect
+                  value={stat.status}
+                  onChange={(status) =>
+                    setStats((prev) => prev.map((s) => (s.id === stat.id ? { ...s, status } : s)))
+                  }
+                />
+              </div>
+            </div>
+            <ItemActions
+              status={stat.status}
+              onSave={() => void saveStat(stat)}
+              onDelete={async () => {
+                await api(`/api/admin/about/stats/${stat.id}`, { method: "DELETE" });
+                setStats((prev) => prev.filter((s) => s.id !== stat.id));
+                notify("Stat removed");
+              }}
+              onToggle={() =>
+                void saveStat({ ...stat, status: stat.status === "published" ? "draft" : "published" })
+              }
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function DropPanel({ notify }: { notify: Notify }) {
+  const [drop, setDrop] = useState<DropRow | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setDrop(await api<DropRow | null>("/api/admin/drops"));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const save = async () => {
+    if (!drop) return;
+    const updated = await api<DropRow>("/api/admin/drops", {
+      method: "PATCH",
+      body: JSON.stringify(drop),
+    });
+    setDrop(updated);
+    notify("Next drop saved");
+  };
+
+  const createDefault = () => {
+    setDrop({
+      id: "",
+      section_label: "Limited Edition",
+      heading: "NEXT DROP",
+      title: "Ancestral Code",
+      subtitle: 'The "Ancestral Code" Capsule — 50 Pieces Worldwide',
+      pieces_worldwide: 50,
+      drop_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      background_url: null,
+      cta_primary_label: "Get Early Access",
+      cta_secondary_label: "Unlock Private Collection",
+      footnote: "Invite-only • VIP members get 24hr early access",
+      status: "published",
+      is_active: true,
+    });
+  };
+
+  if (loading) return <p className={styles.empty}>Loading…</p>;
+
+  if (!drop) {
+    return (
+      <div className={styles.panel}>
+        <p className={styles.empty}>No active drop in the database yet.</p>
+        <div className={styles.actions}>
+          <button type="button" className={styles.btnPrimary} onClick={createDefault}>
+            Configure next drop
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.contentPanel}>
+      <div className={styles.panel}>
+        <p className={styles.panelTitle}>Next drop (#drops)</p>
+        <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label>Section label</label>
+            <input
+              value={drop.section_label}
+              onChange={(e) => setDrop({ ...drop, section_label: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Status</label>
+            <StatusSelect value={drop.status} onChange={(status) => setDrop({ ...drop, status })} />
+          </div>
+          <div className={styles.field}>
+            <label>Heading</label>
+            <input value={drop.heading} onChange={(e) => setDrop({ ...drop, heading: e.target.value })} />
+          </div>
+          <div className={styles.field}>
+            <label>Capsule title (internal)</label>
+            <input value={drop.title} onChange={(e) => setDrop({ ...drop, title: e.target.value })} />
+          </div>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Subtitle (shown on site)</label>
+            <input value={drop.subtitle} onChange={(e) => setDrop({ ...drop, subtitle: e.target.value })} />
+          </div>
+          <div className={styles.field}>
+            <label>Pieces worldwide</label>
+            <input
+              type="number"
+              min={1}
+              value={drop.pieces_worldwide}
+              onChange={(e) => setDrop({ ...drop, pieces_worldwide: Number(e.target.value) })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Drop date & time</label>
+            <input
+              type="datetime-local"
+              value={toDatetimeLocal(drop.drop_at)}
+              onChange={(e) =>
+                setDrop({ ...drop, drop_at: new Date(e.target.value).toISOString() })
+              }
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Primary CTA</label>
+            <input
+              value={drop.cta_primary_label}
+              onChange={(e) => setDrop({ ...drop, cta_primary_label: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Secondary CTA</label>
+            <input
+              value={drop.cta_secondary_label}
+              onChange={(e) => setDrop({ ...drop, cta_secondary_label: e.target.value })}
+            />
+          </div>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Footnote</label>
+            <input value={drop.footnote} onChange={(e) => setDrop({ ...drop, footnote: e.target.value })} />
+          </div>
+        </div>
+        <MediaUpload
+          folder="drops"
+          label="Background image"
+          currentUrl={drop.background_url}
+          onUploaded={(url) => setDrop({ ...drop, background_url: url })}
+        />
+        <div className={styles.actions}>
+          <button type="button" className={styles.btnPrimary} onClick={() => void save()}>
+            Save next drop
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function HeroPanel({ notify }: { notify: Notify }) {
+  const [hero, setHero] = useState<HeroRow | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api<{ section: HeroRow | null }>("/api/admin/hero");
+      if (data.section) setHero(data.section);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const save = async () => {
+    if (!hero) return;
+    const updated = await api<HeroRow>("/api/admin/hero", {
+      method: "PATCH",
+      body: JSON.stringify(hero),
+    });
+    setHero({ ...updated, status: updated.status as ContentStatus });
+    notify("Hero saved — slideshow updates on the site");
+  };
+
+  if (loading) return <p className={styles.empty}>Loading hero…</p>;
+  if (!hero) return <p className={styles.empty}>Hero section not found in database.</p>;
+
+  const urls = hero.background_urls ?? [];
+
+  return (
+    <div className={styles.contentPanel}>
+      <div className={styles.panel}>
+        <p className={styles.panelTitle}>Landing hero</p>
+        <p className={styles.panelHint}>
+          Background images rotate every 5 seconds on the homepage. Add several for a cinematic slideshow.
+        </p>
+        <div className={styles.formGrid}>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Tagline</label>
+            <input value={hero.tagline} onChange={(e) => setHero({ ...hero, tagline: e.target.value })} />
+          </div>
+          <div className={styles.field}>
+            <label>Title</label>
+            <input value={hero.title} onChange={(e) => setHero({ ...hero, title: e.target.value })} />
+          </div>
+          <div className={styles.field}>
+            <label>Season label</label>
+            <input value={hero.side_label} onChange={(e) => setHero({ ...hero, side_label: e.target.value })} />
+          </div>
+          <div className={`${styles.field} ${styles.fieldFull}`}>
+            <label>Subtitle</label>
+            <textarea
+              rows={3}
+              value={hero.subtitle}
+              onChange={(e) => setHero({ ...hero, subtitle: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Primary CTA label</label>
+            <input
+              value={hero.cta_primary_label}
+              onChange={(e) => setHero({ ...hero, cta_primary_label: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Primary CTA link</label>
+            <input
+              value={hero.cta_primary_href}
+              onChange={(e) => setHero({ ...hero, cta_primary_href: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Secondary CTA label</label>
+            <input
+              value={hero.cta_secondary_label}
+              onChange={(e) => setHero({ ...hero, cta_secondary_label: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Secondary CTA link</label>
+            <input
+              value={hero.cta_secondary_href}
+              onChange={(e) => setHero({ ...hero, cta_secondary_href: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Scroll label</label>
+            <input
+              value={hero.scroll_label}
+              onChange={(e) => setHero({ ...hero, scroll_label: e.target.value })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>Status</label>
+            <StatusSelect
+              value={hero.status}
+              onChange={(status) => setHero({ ...hero, status })}
+            />
+          </div>
+        </div>
+
+        <div className={`${styles.field} ${styles.fieldFull}`}>
+          <label>Background slideshow ({urls.length} image{urls.length === 1 ? "" : "s"})</label>
+          {urls.length > 0 && (
+            <div className={styles.productImagesGrid}>
+              {urls.map((url, idx) => (
+                <div key={`${url}-${idx}`} className={styles.productImageThumb}>
+                  <img src={url} alt="" />
+                  <div className={styles.thumbActions}>
+                    <button
+                      type="button"
+                      className={styles.btnSmall}
+                      disabled={idx === 0}
+                      onClick={() => {
+                        const next = [...urls];
+                        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                        setHero({ ...hero, background_urls: next });
+                      }}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnSmall}
+                      disabled={idx === urls.length - 1}
+                      onClick={() => {
+                        const next = [...urls];
+                        [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                        setHero({ ...hero, background_urls: next });
+                      }}
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnSmall}
+                      onClick={() =>
+                        setHero({
+                          ...hero,
+                          background_urls: urls.filter((_, j) => j !== idx),
+                        })
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <MediaUpload
+            folder="hero"
+            label="Add background image"
+            onUploaded={(url) =>
+              setHero({
+                ...hero,
+                background_urls: [...urls, url],
+              })
+            }
+          />
+        </div>
+
+        <div className={styles.actions}>
+          <button type="button" className={styles.btnPrimary} onClick={() => void save()}>
+            Save hero
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type OrderRow = {
+  id: string;
+  order_number: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  status: string;
+  payment_method: string | null;
+  payment_status: string;
+  total_amount: number;
+  placed_at: string;
+};
+
+export function OrdersPanel({ notify }: { notify: Notify }) {
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [detail, setDetail] = useState<import("@/types/cart").OrderSummary | null>(null);
+  const [deliveryAt, setDeliveryAt] = useState("");
+  const [deliveryMsg, setDeliveryMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await api<OrderRow[]>("/api/admin/orders?payment_status=awaiting_confirmation");
+      setOrders(list);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const openOrder = async (id: string) => {
+    setSelected(id);
+    const d = await api<import("@/types/cart").OrderSummary>(`/api/admin/orders/${id}`);
+    setDetail(d);
+    setDeliveryAt("");
+    setDeliveryMsg("");
+  };
+
+  const confirm = async () => {
+    if (!selected) return;
+    await api(`/api/admin/orders/${selected}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        action: "confirm_manual",
+        expected_delivery_at: deliveryAt,
+        delivery_message: deliveryMsg,
+      }),
+    });
+    notify("Order confirmed — customer emailed");
+    setSelected(null);
+    setDetail(null);
+    void load();
+  };
+
+  if (loading) return <p className={styles.empty}>Loading orders…</p>;
+
+  return (
+    <div className={styles.contentPanel}>
+      <div className={styles.panel}>
+        <p className={styles.panelTitle}>Awaiting payment confirmation</p>
+        {orders.length === 0 ? (
+          <p className={styles.empty}>No manual payments pending.</p>
+        ) : (
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Total</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o) => (
+                  <tr key={o.id}>
+                    <td>{o.order_number}</td>
+                    <td>
+                      {o.full_name}
+                      <br />
+                      <span style={{ color: "#888" }}>{o.email}</span>
+                    </td>
+                    <td>₦{o.total_amount.toLocaleString("en-NG")}</td>
+                    <td>
+                      <button type="button" className={styles.btnSmall} onClick={() => void openOrder(o.id)}>
+                        Review
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {detail && selected && (
+        <div className={styles.panel}>
+          <p className={styles.panelTitle}>Confirm {detail.order_number}</p>
+          <p className={styles.panelHint}>
+            {detail.full_name} · {detail.phone} · {detail.email}
+          </p>
+          <ul style={{ listStyle: "none", margin: "0 0 1rem", padding: 0, color: "#BFC0C0", fontSize: "0.8125rem" }}>
+            {detail.items.map((i) => (
+              <li key={i.id} style={{ padding: "0.35rem 0" }}>
+                {i.product_name} × {i.quantity} — ₦{i.line_total.toLocaleString("en-NG")}
+              </li>
+            ))}
+          </ul>
+          <div className={styles.formGrid}>
+            <div className={`${styles.field} ${styles.fieldFull}`}>
+              <label>Expected delivery (date & time) *</label>
+              <input
+                type="datetime-local"
+                value={deliveryAt}
+                onChange={(e) => setDeliveryAt(e.target.value)}
+              />
+            </div>
+            <div className={`${styles.field} ${styles.fieldFull}`}>
+              <label>Delivery message to customer *</label>
+              <textarea
+                value={deliveryMsg}
+                onChange={(e) => setDeliveryMsg(e.target.value)}
+                placeholder="Courier, tracking, what to expect…"
+              />
+            </div>
+          </div>
+          <div className={styles.actions}>
+            <button type="button" className={styles.btnPrimary} onClick={() => void confirm()}>
+              Confirm &amp; email customer
+            </button>
+            <button type="button" className={styles.btnGhost} onClick={() => setSelected(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

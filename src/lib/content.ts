@@ -1,4 +1,9 @@
 import { query } from "@/lib/db";
+import {
+  loadHeroBackgroundUrls,
+  resolveHeroBackgroundUrls,
+} from "@/lib/hero-images";
+import { loadProductImageMap, resolveProductImageUrls } from "@/lib/product-images";
 import type {
   AboutSection,
   CinematicVideo,
@@ -247,6 +252,18 @@ export async function getSiteContent(): Promise<SiteContent> {
     swatchMap.set(s.product_id, list);
   }
 
+  const [heroBackgroundUrls, productImageMap] = await Promise.all([
+    loadHeroBackgroundUrls(),
+    loadProductImageMap(),
+  ]);
+  const heroRow = heroRows.rows[0];
+  const hero = heroRow
+    ? {
+        ...heroRow,
+        background_urls: resolveHeroBackgroundUrls(heroRow.background_url, heroBackgroundUrls),
+      }
+    : null;
+
   const marqueeMap = new Map<string, string[]>();
   for (const item of marqueeItemRows.rows) {
     const list = marqueeMap.get(item.band_slug) ?? [];
@@ -281,7 +298,7 @@ export async function getSiteContent(): Promise<SiteContent> {
 
   return {
     settings: settingsRows.rows[0] ?? null,
-    hero: heroRows.rows[0] ?? null,
+    hero,
     about: aboutRows.rows[0] ?? null,
     aboutStats: aboutStatsRows.rows.map((r) => ({
       id: r.id,
@@ -318,20 +335,24 @@ export async function getSiteContent(): Promise<SiteContent> {
     })),
     shopSection: shopSectionRows.rows[0] ?? null,
     productCategories: categories.rows,
-    products: products.rows.map((r) => ({
-      id: r.id,
-      slug: r.slug,
-      name: r.name,
-      price_amount: Number(r.price_amount),
-      category_slug: r.category_slug,
-      category_name: r.category_name,
-      badge: r.badge,
-      stock_quantity: r.stock_quantity,
-      image_url: r.image_url,
-      sort_order: r.sort_order,
-      status: r.status as ProductItem["status"],
-      swatches: swatchMap.get(r.id) ?? [],
-    })),
+    products: products.rows.map((r) => {
+      const image_urls = resolveProductImageUrls(r.image_url, productImageMap.get(r.id));
+      return {
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        price_amount: Number(r.price_amount),
+        category_slug: r.category_slug,
+        category_name: r.category_name,
+        badge: r.badge,
+        stock_quantity: r.stock_quantity,
+        image_url: image_urls[0] ?? r.image_url,
+        image_urls,
+        sort_order: r.sort_order,
+        status: r.status as ProductItem["status"],
+        swatches: swatchMap.get(r.id) ?? [],
+      };
+    }),
     drop: dropRows.rows[0] ?? null,
     communitySection: communitySectionRows.rows[0]
       ? {

@@ -4,20 +4,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Logo from "@/components/Logo";
-import {
-  getDropSettings,
-  getProducts,
-  saveDropSettings,
-  type AdminProduct,
-  type DropSettings,
-} from "@/lib/admin-store";
+import { getProducts, type AdminProduct } from "@/lib/admin-store";
 import AdminVipPanel from "@/components/admin/AdminVipPanel";
+import FashionMenuToggle from "@/components/FashionMenuToggle";
 import {
+  AboutPanel,
+  HeroPanel,
   CinematicPanel,
   CollaboratorsPanel,
   CollectionsPanel,
   CommunityPanel,
+  DropPanel,
   EditorialPanel,
+  OrdersPanel,
   LookbookPanel,
   ShopPanel,
 } from "@/components/admin/AdminContentPanels";
@@ -25,6 +24,7 @@ import styles from "@/styles/admin.module.scss";
 
 type Tab =
   | "overview"
+  | "hero"
   | "collections"
   | "lookbook"
   | "cinematic"
@@ -32,12 +32,15 @@ type Tab =
   | "community"
   | "collaborators"
   | "editorial"
+  | "about"
   | "drops"
   | "vip"
+  | "orders"
   | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "hero", label: "Hero" },
   { id: "collections", label: "Collections" },
   { id: "lookbook", label: "Lookbook" },
   { id: "cinematic", label: "Cinematic" },
@@ -45,8 +48,10 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "community", label: "Community" },
   { id: "collaborators", label: "Ambassadors" },
   { id: "editorial", label: "Editorial" },
+  { id: "about", label: "About" },
   { id: "drops", label: "Next Drop" },
   { id: "vip", label: "VIP Members" },
+  { id: "orders", label: "Orders" },
   { id: "settings", label: "Settings" },
 ];
 
@@ -54,11 +59,11 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview");
   const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [drop, setDrop] = useState<DropSettings | null>(null);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [toast, setToast] = useState("");
   const [siteName, setSiteName] = useState("AFRESH");
   const [heroTagline, setHeroTagline] = useState("Global Fashion Movement — Born From Africa");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const notify = useCallback((msg: string) => {
     setToast(msg);
@@ -67,7 +72,6 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setProducts(getProducts());
-    setDrop(getDropSettings());
     setSiteName(localStorage.getItem("afresh_site_name") || "AFRESH");
     setHeroTagline(
       localStorage.getItem("afresh_hero_tagline") || "Global Fashion Movement — Born From Africa"
@@ -77,12 +81,6 @@ export default function AdminDashboard() {
       .then((d) => d && setUnreadNotifs(d.unreadCount ?? 0))
       .catch(() => {});
   }, []);
-
-  const saveDrop = () => {
-    if (!drop) return;
-    saveDropSettings(drop);
-    notify("Drop settings saved");
-  };
 
   const saveSiteSettings = () => {
     localStorage.setItem("afresh_site_name", siteName);
@@ -99,9 +97,19 @@ export default function AdminDashboard() {
     router.refresh();
   };
 
+  const selectTab = (id: Tab) => {
+    setTab(id);
+    setSidebarOpen(false);
+  };
+
   return (
     <div className={styles.admin}>
-      <aside className={styles.sidebar}>
+      <div
+        className={`${styles.sidebarBackdrop} ${sidebarOpen ? styles.sidebarBackdropVisible : ""}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+      />
+      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.sidebarLogo}>
           <Logo size="md" priority />
         </div>
@@ -111,7 +119,7 @@ export default function AdminDashboard() {
               key={t.id}
               type="button"
               className={`${styles.navItem} ${tab === t.id ? styles.navItemActive : ""}`}
-              onClick={() => setTab(t.id)}
+              onClick={() => selectTab(t.id)}
             >
               {t.label}
               {t.id === "vip" && unreadNotifs > 0 && (
@@ -130,7 +138,10 @@ export default function AdminDashboard() {
 
       <main className={styles.main}>
         <div className={styles.mobileHeader}>
-          <Logo size="sm" />
+          <div className={styles.mobileHeaderLeft}>
+            <FashionMenuToggle open={sidebarOpen} onClick={() => setSidebarOpen((o) => !o)} label="Studio" />
+            <Logo size="sm" />
+          </div>
           <Link href="/" className={styles.backLink}>
             ← Site
           </Link>
@@ -141,10 +152,13 @@ export default function AdminDashboard() {
             <button
               key={t.id}
               type="button"
-              className={`${styles.navItem} ${tab === t.id ? styles.navItemActive : ""}`}
-              onClick={() => setTab(t.id)}
+              className={`${styles.tabPill} ${tab === t.id ? styles.tabPillActive : ""}`}
+              onClick={() => selectTab(t.id)}
             >
               {t.label}
+              {t.id === "vip" && unreadNotifs > 0 && (
+                <span className={styles.navBadge}>{unreadNotifs}</span>
+              )}
             </button>
           ))}
         </div>
@@ -182,6 +196,16 @@ export default function AdminDashboard() {
                 </button>
               </div>
             )}
+          </>
+        )}
+
+        {tab === "hero" && (
+          <>
+            <h1 className={styles.pageTitle}>HERO</h1>
+            <p className={styles.pageDesc}>
+              Homepage hero copy, slideshow backgrounds, and CTAs.
+            </p>
+            <HeroPanel notify={notify} />
           </>
         )}
 
@@ -241,49 +265,31 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {tab === "drops" && drop && (
+        {tab === "about" && (
+          <>
+            <h1 className={styles.pageTitle}>ABOUT</h1>
+            <p className={styles.pageDesc}>Manifesto copy, story CTA, and the stats row (countries, collections, etc.).</p>
+            <AboutPanel notify={notify} />
+          </>
+        )}
+
+        {tab === "drops" && (
           <>
             <h1 className={styles.pageTitle}>NEXT DROP</h1>
-            <p className={styles.pageDesc}>Configure the limited capsule shown on the landing page.</p>
-            <div className={styles.panel}>
-              <div className={styles.formGrid}>
-                <div className={styles.field}>
-                  <label>Capsule title</label>
-                  <input
-                    value={drop.title}
-                    onChange={(e) => setDrop({ ...drop, title: e.target.value })}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label>Pieces worldwide</label>
-                  <input
-                    type="number"
-                    value={drop.pieces}
-                    onChange={(e) => setDrop({ ...drop, pieces: Number(e.target.value) })}
-                  />
-                </div>
-                <div className={`${styles.field} ${styles.fieldFull}`}>
-                  <label>Subtitle</label>
-                  <input
-                    value={drop.subtitle}
-                    onChange={(e) => setDrop({ ...drop, subtitle: e.target.value })}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label>Drop date</label>
-                  <input
-                    type="datetime-local"
-                    value={drop.dropDate.slice(0, 16)}
-                    onChange={(e) => setDrop({ ...drop, dropDate: new Date(e.target.value).toISOString() })}
-                  />
-                </div>
-              </div>
-              <div className={styles.actions}>
-                <button type="button" className={styles.btnPrimary} onClick={saveDrop}>
-                  Save drop
-                </button>
-              </div>
-            </div>
+            <p className={styles.pageDesc}>
+              Countdown, background image, CTAs, and footnote for the limited capsule section.
+            </p>
+            <DropPanel notify={notify} />
+          </>
+        )}
+
+        {tab === "orders" && (
+          <>
+            <h1 className={styles.pageTitle}>ORDERS</h1>
+            <p className={styles.pageDesc}>
+              Confirm manual bank transfers and send delivery details to customers.
+            </p>
+            <OrdersPanel notify={notify} />
           </>
         )}
 

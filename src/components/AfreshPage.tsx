@@ -7,7 +7,6 @@ import { formatNaira, productBadgeLabel, resolveImage, useSiteContent } from "@/
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
-  ChevronDown,
   Clock,
   Gift,
   Globe,
@@ -15,18 +14,22 @@ import {
   Lock,
   Mail,
   MapPin,
-  Menu,
   Music,
   Play,
   Search,
   ShoppingBag,
   Sparkles,
   Twitter,
-  X,
   Youtube,
 } from "lucide-react";
+import FashionMenuToggle from "@/components/FashionMenuToggle";
+import ProductImageCarousel from "@/components/ProductImageCarousel";
 import styles from "@/styles/home.module.scss";
 import { useAfreshSite } from "@/hooks/useAfreshSite";
+import { useCart } from "@/hooks/useCart";
+import CheckoutDrawer from "@/components/CheckoutDrawer";
+import SearchOverlay from "@/components/SearchOverlay";
+import HeroSection from "@/components/HeroSection";
 
 const PERK_ICONS: Record<string, LucideIcon> = {
   clock: Clock,
@@ -70,6 +73,8 @@ function NavLink({ href, children, onClick }: { href: string; children: React.Re
 export default function AfreshPage() {
   const { content } = useSiteContent();
   const site = useAfreshSite(content.drop?.drop_at ?? null);
+  const cart = useCart(site.showToast);
+  const currency = content.settings?.currency_symbol ?? "₦";
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoIndex, setVideoIndex] = useState(0);
   const [filmOpen, setFilmOpen] = useState(false);
@@ -85,7 +90,6 @@ export default function AfreshPage() {
     { slug: "all", name: "All" },
     ...content.productCategories.map((c) => ({ slug: c.slug, name: c.name })),
   ];
-  const currency = content.settings?.currency_symbol ?? "₦";
 
   const playFilm = () => {
     if (videos.length === 0) {
@@ -142,73 +146,67 @@ export default function AfreshPage() {
             <NavLink href="#about" onClick={site.scrollTo}>About</NavLink>
           </div>
           <div className={styles.navActions}>
-            <button type="button" className={styles.iconBtn} id="searchBtn" onClick={() => site.showToast("Search coming soon")} aria-label="Search">
+            <button type="button" className={styles.iconBtn} id="searchBtn" onClick={() => cart.setSearchOpen(true)} aria-label="Search">
               <Search size={18} />
             </button>
-            <button type="button" className={styles.iconBtn} id="cartBtn" onClick={() => site.showToast(`Your bag has ${site.cartCount} item${site.cartCount !== 1 ? "s" : ""}`)} aria-label="Cart">
+            <button type="button" className={styles.iconBtn} id="cartBtn" onClick={() => cart.openCheckout()} aria-label="Cart">
               <ShoppingBag size={18} />
-              <span className={styles.cartBadge}>{site.cartCount}</span>
+              <span className={styles.cartBadge}>{cart.cartCount}</span>
             </button>
             <NavLink href="#membership" onClick={site.scrollTo}><span className={styles.vipBtn}>Join VIP</span></NavLink>
           </div>
-          <button type="button" className={styles.menuToggle} onClick={site.toggleMenu} aria-label="Menu">
-            {site.menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className={styles.navMobileBar}>
+            <div className={styles.navMobileIcons}>
+              <button type="button" className={styles.iconBtn} onClick={() => cart.setSearchOpen(true)} aria-label="Search">
+                <Search size={18} />
+              </button>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                id="cartBtnMobile"
+                onClick={() => cart.openCheckout()}
+                aria-label="Cart"
+              >
+                <ShoppingBag size={18} />
+                <span className={styles.cartBadge}>{cart.cartCount}</span>
+              </button>
+            </div>
+            <FashionMenuToggle open={site.menuOpen} onClick={site.toggleMenu} />
+          </div>
         </div>
       </nav>
 
-      <div className={`mobile-menu ${site.menuOpen ? "open" : ""} ${styles.mobileMenu}`} id="mobileMenu">
-        {["#collections", "#lookbook", "#shop", "#editorial", "#community", "#about"].map((href) => (
-          <a key={href} href={href} onClick={(e) => { e.preventDefault(); site.scrollTo(href); }}>
-            {href.slice(1).toUpperCase()}
+      <div
+        className={`mobile-menu ${site.menuOpen ? "open" : ""} ${styles.mobileMenu}`}
+        id="mobileMenu"
+        aria-hidden={!site.menuOpen}
+      >
+        <div className={styles.mobileMenuInner}>
+          <p className={styles.mobileMenuLabel}>Navigate</p>
+          {["#collections", "#lookbook", "#shop", "#editorial", "#community", "#about"].map((href, i) => (
+            <a
+              key={href}
+              href={href}
+              className={styles.mobileMenuLink}
+              style={{ transitionDelay: site.menuOpen ? `${i * 0.05}s` : "0s" }}
+              onClick={(e) => { e.preventDefault(); site.scrollTo(href); }}
+            >
+              <span className={styles.mobileMenuIndex}>{String(i + 1).padStart(2, "0")}</span>
+              {href.slice(1).toUpperCase()}
+            </a>
+          ))}
+          <a
+            href="#membership"
+            className={styles.mobileVip}
+            onClick={(e) => { e.preventDefault(); site.scrollTo("#membership"); }}
+          >
+            Join VIP
           </a>
-        ))}
-        <a href="#membership" className={styles.mobileVip} onClick={(e) => { e.preventDefault(); site.scrollTo("#membership"); }}>Join VIP</a>
+        </div>
       </div>
 
       {content.hero && (
-        <section id="hero" className={styles.hero}>
-          <div className={styles.heroImageWrap}>
-            <img
-              src={resolveImage("afresh-hero-dark", content.hero.background_url, 1920, 1080)}
-              alt={content.hero.title}
-              className={`${styles.heroImage} hero-bg`}
-            />
-          </div>
-          <div className={styles.heroOverlay1} />
-          <div className={styles.heroOverlay2} />
-          <div id="heroParticles" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
-          <div className={styles.heroContent} id="heroContent">
-            <p className={`${styles.heroTagline} hero-fade`} style={{ opacity: 0 }}>{content.hero.tagline}</p>
-            <h1 className={`${styles.heroTitle} hero-title`} style={{ opacity: 0 }}>{content.hero.title}</h1>
-            <p className={`${styles.heroSubtitle} hero-fade`} style={{ opacity: 0 }}>{content.hero.subtitle}</p>
-            <div className={`${styles.heroCtas} hero-fade`} style={{ opacity: 0 }}>
-              <a
-                href={content.hero.cta_primary_href}
-                className="btn-primary"
-                onClick={(e) => { e.preventDefault(); site.scrollTo(content.hero!.cta_primary_href); }}
-              >
-                {content.hero.cta_primary_label}
-              </a>
-              <a
-                href={content.hero.cta_secondary_href}
-                className="btn-outline"
-                onClick={(e) => { e.preventDefault(); site.scrollTo(content.hero!.cta_secondary_href); }}
-              >
-                {content.hero.cta_secondary_label}
-              </a>
-            </div>
-          </div>
-          <div className={`${styles.heroScroll} scroll-indicator`}>
-            <span>{content.hero.scroll_label}</span>
-            <ChevronDown size={16} style={{ color: "rgba(200,169,107,0.6)" }} />
-          </div>
-          <div className={styles.heroSide}>
-            <div className={styles.heroSideLine} />
-            <span>{content.hero.side_label}</span>
-            <div className={styles.heroSideLine} />
-          </div>
-        </section>
+        <HeroSection hero={content.hero} onNavigate={site.scrollTo} />
       )}
 
       {primaryMarquee && <Marquee items={primaryMarquee.items} />}
@@ -401,9 +399,16 @@ export default function AfreshPage() {
               return (
                 <div key={p.id} className="product-card reveal" data-category={p.category_slug}>
                   <div className={styles.productImageWrap}>
-                    <img src={resolveImage(p.slug, p.image_url, 400, 530)} alt={p.name} className="product-img" />
+                    <ProductImageCarousel
+                      productId={p.id}
+                      slug={p.slug}
+                      name={p.name}
+                      imageUrl={p.image_url}
+                      imageUrls={p.image_urls}
+                      resolveSrc={resolveImage}
+                    />
                     <div className={`product-overlay ${styles.productOverlay}`}>
-                      <button type="button" className={styles.addToBagBtn} onClick={() => site.addToCart(p.name)}>
+                      <button type="button" className={styles.addToBagBtn} onClick={() => void cart.addToCart(p.id, p.name)}>
                         Add to Bag
                       </button>
                     </div>
@@ -742,6 +747,18 @@ export default function AfreshPage() {
       </footer>
       )}
 
+      <SearchOverlay
+        open={cart.searchOpen}
+        onClose={() => cart.setSearchOpen(false)}
+        currency={currency}
+        onSelect={() => site.scrollTo("#shop")}
+      />
+      <CheckoutDrawer
+        cart={cart}
+        currency={currency}
+        showToast={site.showToast}
+        onShopMore={() => site.scrollTo("#shop")}
+      />
     </>
   );
 }

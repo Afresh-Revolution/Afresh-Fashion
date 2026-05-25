@@ -182,6 +182,58 @@ img {
   }
 }
 
+@keyframes heroAuroraShift {
+  0% {
+    opacity: 0.75;
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.08) translate(2%, -1%);
+  }
+}
+
+@keyframes heroScanDrift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+@keyframes heroOrbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes heroLivePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes heroCtaShine {
+  0%,
+  70%,
+  100% {
+    transform: translateX(-120%);
+  }
+  40% {
+    transform: translateX(120%);
+  }
+}
+
 .hero-bg {
   animation: kenBurns 20s ease-in-out infinite alternate;
 }
@@ -231,6 +283,10 @@ img {
   &:hover .product-img {
     transform: scale(1.05);
   }
+
+  &:hover .product-carousel .product-img {
+    transform: scale(1.05);
+  }
 }
 
 .product-img {
@@ -275,13 +331,13 @@ img {
   transform: scale(0.9);
 }
 
-// Mobile menu
+// Mobile menu — reveal from fashion menu (top-right)
 .mobile-menu {
-  clip-path: circle(0% at calc(100% - 40px) 40px);
-  transition: clip-path 0.8s cubic-bezier(0.77, 0, 0.18, 1);
+  clip-path: circle(0% at calc(100% - 2.5rem) 2.5rem);
+  transition: clip-path 0.85s cubic-bezier(0.77, 0, 0.18, 1);
 
   &.open {
-    clip-path: circle(150% at calc(100% - 40px) 40px);
+    clip-path: circle(150% at calc(100% - 2.5rem) 2.5rem);
   }
 }
 
@@ -316,11 +372,20 @@ img {
 // Particles
 .particle {
   position: absolute;
-  width: 2px;
-  height: 2px;
-  background: rgba($gold, 0.3);
   border-radius: 50%;
   pointer-events: none;
+  background: rgba($gold, 0.55);
+  box-shadow: 0 0 6px rgba($gold, 0.35);
+
+  &.particle--dim {
+    background: rgba($offwhite, 0.25);
+    box-shadow: none;
+  }
+
+  &.particle--glow {
+    background: rgba($gold, 0.85);
+    box-shadow: 0 0 14px rgba($gold, 0.6);
+  }
 }
 
 // Section divider

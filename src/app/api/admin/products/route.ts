@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { adminError } from "@/lib/admin-api-response";
+import { loadProductImageMap, replaceProductImages, resolveProductImageUrls } from "@/lib/product-images";
 
 async function productsWithSwatches() {
   const { rows } = await query<{
@@ -32,11 +33,17 @@ async function productsWithSwatches() {
     list.push(s.hex_color);
     map.set(s.product_id, list);
   }
-  return rows.map((r) => ({
-    ...r,
-    price_amount: Number(r.price_amount),
-    swatches: map.get(r.id) ?? [],
-  }));
+  const imageMap = await loadProductImageMap();
+  return rows.map((r) => {
+    const image_urls = resolveProductImageUrls(r.image_url, imageMap.get(r.id));
+    return {
+      ...r,
+      price_amount: Number(r.price_amount),
+      image_url: image_urls[0] ?? r.image_url,
+      image_urls,
+      swatches: map.get(r.id) ?? [],
+    };
+  });
 }
 
 export async function GET() {
@@ -77,6 +84,11 @@ export async function POST(request: Request) {
       ]
     );
     const productId = rows[0].id;
+    if (Array.isArray(body.image_urls)) {
+      await replaceProductImages(productId, body.image_urls);
+    } else if (body.image_url) {
+      await replaceProductImages(productId, [body.image_url]);
+    }
     if (Array.isArray(body.swatches)) {
       for (let i = 0; i < body.swatches.length; i++) {
         await query(

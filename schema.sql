@@ -1,31 +1,34 @@
--- =============================================================================
--- AFRESH Fashion — PostgreSQL schema (FULLY IDEMPOTENT)
--- Safe to re-run any time: existing types/tables/data are never dropped.
--- - CREATE … IF NOT EXISTS / CREATE OR REPLACE
--- - DROP TRIGGER IF EXISTS before CREATE TRIGGER
--- - ADD CONSTRAINT / ADD COLUMN only when missing
--- - Seeds use ON CONFLICT DO NOTHING (or DO UPDATE for admin)
--- No wrapping transaction: one failed statement does not roll back prior steps.
--- =============================================================================
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Allow re-running after helper signature changes (Postgres cannot REPLACE return type).
+DROP FUNCTION IF EXISTS afresh_add_constraint_if_missing(TEXT, TEXT);
+DROP FUNCTION IF EXISTS afresh_add_column_if_missing(TEXT, TEXT, TEXT);
 
 -- Add a column only when the table exists but the column does not (upgrade path).
 CREATE OR REPLACE FUNCTION afresh_add_column_if_missing(
   p_table TEXT,
   p_column TEXT,
   p_definition TEXT
-) RETURNS VOID LANGUAGE plpgsql AS $$
+) RETURNS TEXT LANGUAGE plpgsql AS $$
 BEGIN
-  IF EXISTS (
+  IF NOT EXISTS (
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = p_table
-  ) AND NOT EXISTS (
+  ) THEN
+    RETURN 'skip (no table): ' || p_table;
+  END IF;
+  IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = p_table AND column_name = p_column
   ) THEN
-    EXECUTE format('ALTER TABLE %I ADD COLUMN %I %s', p_table, p_column, p_definition);
+    RETURN 'skip (exists): ' || p_table || '.' || p_column;
   END IF;
+  EXECUTE format('ALTER TABLE %I ADD COLUMN %I %s', p_table, p_column, p_definition);
+  RETURN 'ok: ' || p_table || '.' || p_column;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN 'error: ' || p_table || '.' || p_column || ' — ' || SQLERRM;
 END;
 $$;
 
@@ -33,16 +36,23 @@ $$;
 CREATE OR REPLACE FUNCTION afresh_add_constraint_if_missing(
   p_constraint TEXT,
   p_sql TEXT
-) RETURNS VOID LANGUAGE plpgsql AS $$
+) RETURNS TEXT LANGUAGE plpgsql AS $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = p_constraint) THEN
-    RETURN;
+    RETURN 'skip (exists): ' || p_constraint;
   END IF;
   BEGIN
     EXECUTE p_sql;
+    RETURN 'ok: ' || p_constraint;
   EXCEPTION
-    WHEN duplicate_object THEN NULL;
-    WHEN duplicate_table THEN NULL;
+    WHEN duplicate_object THEN
+      RETURN 'skip (duplicate): ' || p_constraint;
+    WHEN duplicate_table THEN
+      RETURN 'skip (duplicate table): ' || p_constraint;
+    WHEN unique_violation THEN
+      RETURN 'warn (duplicate rows — clean data then re-run): ' || p_constraint;
+    WHEN OTHERS THEN
+      RETURN 'error: ' || p_constraint || ' — ' || SQLERRM;
   END;
 END;
 $$;
@@ -174,6 +184,15 @@ CREATE TRIGGER trg_hero_section_updated_at
   BEFORE UPDATE ON hero_section
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+CREATE TABLE IF NOT EXISTS hero_background_images (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  image_url   TEXT NOT NULL,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hero_background_images_sort ON hero_background_images(sort_order);
+
 -- -----------------------------------------------------------------------------
 -- MARQUEE bands (two scrolling strips on landing page)
 -- -----------------------------------------------------------------------------
@@ -238,7 +257,8 @@ CREATE TABLE IF NOT EXISTS about_stats (
   CONSTRAINT about_stats_value_check CHECK (
     (is_symbolic = TRUE AND symbol_text IS NOT NULL)
     OR (is_symbolic = FALSE AND value_numeric IS NOT NULL)
-  )
+  ),
+  CONSTRAINT uq_about_stats_label UNIQUE (label)
 );
 
 DROP TRIGGER IF EXISTS trg_about_section_updated_at ON about_section;
@@ -307,7 +327,8 @@ CREATE TABLE IF NOT EXISTS lookbook_looks (
   sort_order      INTEGER NOT NULL DEFAULT 0,
   status          content_status NOT NULL DEFAULT 'published',
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_lookbook_looks_label UNIQUE (label)
 );
 
 CREATE INDEX IF NOT EXISTS idx_lookbook_looks_sort ON lookbook_looks(sort_order);
@@ -407,12 +428,23 @@ CREATE TABLE IF NOT EXISTS product_color_swatches (
   product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   hex_color   CHAR(7) NOT NULL CHECK (hex_color ~ '^#[0-9A-Fa-f]{6}$'),
   label       TEXT,
-  sort_order  INTEGER NOT NULL DEFAULT 0
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  CONSTRAINT uq_product_color_swatches UNIQUE (product_id, hex_color)
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_status ON products(status, sort_order);
 CREATE INDEX IF NOT EXISTS idx_product_swatches_product ON product_color_swatches(product_id);
+
+CREATE TABLE IF NOT EXISTS product_images (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  image_url   TEXT NOT NULL,
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_images_product ON product_images(product_id, sort_order);
 
 DROP TRIGGER IF EXISTS trg_shop_section_updated_at ON shop_section;
 CREATE TRIGGER trg_shop_section_updated_at
@@ -486,7 +518,8 @@ CREATE TABLE IF NOT EXISTS community_posts (
   sort_order      INTEGER NOT NULL DEFAULT 0,
   status          content_status NOT NULL DEFAULT 'published',
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_community_posts_handle UNIQUE (handle)
 );
 
 CREATE TABLE IF NOT EXISTS collaborators (
@@ -499,7 +532,8 @@ CREATE TABLE IF NOT EXISTS collaborators (
   sort_order      INTEGER NOT NULL DEFAULT 0,
   status          content_status NOT NULL DEFAULT 'published',
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_collaborators_name UNIQUE (name)
 );
 
 DROP TRIGGER IF EXISTS trg_community_section_updated_at ON community_section;
@@ -540,7 +574,8 @@ CREATE TABLE IF NOT EXISTS editorial_articles (
   status          content_status NOT NULL DEFAULT 'published',
   published_at    TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_editorial_articles_title UNIQUE (title)
 );
 
 CREATE INDEX IF NOT EXISTS idx_editorial_articles_layout ON editorial_articles(layout, sort_order);
@@ -580,7 +615,8 @@ CREATE TABLE IF NOT EXISTS membership_perks (
   sort_order  INTEGER NOT NULL DEFAULT 0,
   status      content_status NOT NULL DEFAULT 'published',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_membership_perks_title UNIQUE (title)
 );
 
 CREATE TABLE IF NOT EXISTS vip_members (
@@ -693,7 +729,8 @@ CREATE TABLE IF NOT EXISTS footer_link_groups (
   sort_order  INTEGER NOT NULL DEFAULT 0,
   status      content_status NOT NULL DEFAULT 'published',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_footer_link_groups_title UNIQUE (title)
 );
 
 CREATE TABLE IF NOT EXISTS footer_links (
@@ -715,7 +752,8 @@ CREATE TABLE IF NOT EXISTS social_links (
   sort_order  INTEGER NOT NULL DEFAULT 0,
   status      content_status NOT NULL DEFAULT 'published',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_social_links_platform UNIQUE (platform)
 );
 
 DROP TRIGGER IF EXISTS trg_footer_content_updated_at ON footer_content;
@@ -886,66 +924,81 @@ CREATE TRIGGER trg_orders_order_number
 -- SCHEMA SYNC: columns & constraints on existing databases (re-run safe)
 -- -----------------------------------------------------------------------------
 
-SELECT afresh_add_column_if_missing('cinematic_videos', 'file_size_bytes', 'BIGINT');
-SELECT afresh_add_column_if_missing('cinematic_videos', 'mime_type', 'TEXT');
-SELECT afresh_add_column_if_missing('vip_email_campaigns', 'recipient_count', 'INTEGER NOT NULL DEFAULT 0');
-SELECT afresh_add_column_if_missing('vip_email_campaigns', 'sent_at', 'TIMESTAMPTZ');
-SELECT afresh_add_column_if_missing('admin_notifications', 'metadata', 'JSONB NOT NULL DEFAULT ''{}''');
-SELECT afresh_add_column_if_missing('vip_members', 'unsubscribed_at', 'TIMESTAMPTZ');
-SELECT afresh_add_column_if_missing('vip_members', 'source', 'TEXT NOT NULL DEFAULT ''landing''');
+DO $afresh_sync$
+BEGIN
+  PERFORM afresh_add_column_if_missing('cinematic_videos', 'file_size_bytes', 'BIGINT');
+  PERFORM afresh_add_column_if_missing('cinematic_videos', 'mime_type', 'TEXT');
+  PERFORM afresh_add_column_if_missing('vip_email_campaigns', 'recipient_count', 'INTEGER NOT NULL DEFAULT 0');
+  PERFORM afresh_add_column_if_missing('vip_email_campaigns', 'sent_at', 'TIMESTAMPTZ');
+  PERFORM afresh_add_column_if_missing('admin_notifications', 'metadata', 'JSONB NOT NULL DEFAULT ''{}''');
+  PERFORM afresh_add_column_if_missing('vip_members', 'unsubscribed_at', 'TIMESTAMPTZ');
+  PERFORM afresh_add_column_if_missing('vip_members', 'source', 'TEXT NOT NULL DEFAULT ''landing''');
+  PERFORM afresh_add_column_if_missing('orders', 'payment_method', 'TEXT');
+  PERFORM afresh_add_column_if_missing('orders', 'payment_status', 'TEXT NOT NULL DEFAULT ''unpaid''');
+  PERFORM afresh_add_column_if_missing('orders', 'paystack_reference', 'TEXT');
+  PERFORM afresh_add_column_if_missing('orders', 'phone', 'TEXT');
+  PERFORM afresh_add_column_if_missing('orders', 'full_name', 'TEXT');
+  PERFORM afresh_add_column_if_missing('orders', 'customer_notes', 'TEXT');
+  PERFORM afresh_add_column_if_missing('orders', 'expected_delivery_at', 'TIMESTAMPTZ');
+  PERFORM afresh_add_column_if_missing('orders', 'delivery_message', 'TEXT');
+  PERFORM afresh_add_column_if_missing('orders', 'manual_paid_at', 'TIMESTAMPTZ');
+  PERFORM afresh_add_column_if_missing('order_items', 'product_image_url', 'TEXT');
+  PERFORM afresh_add_column_if_missing('order_items', 'product_slug', 'TEXT');
 
-SELECT afresh_add_constraint_if_missing(
-  'uq_about_stats_label',
-  'ALTER TABLE about_stats ADD CONSTRAINT uq_about_stats_label UNIQUE (label)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_lookbook_looks_label',
-  'ALTER TABLE lookbook_looks ADD CONSTRAINT uq_lookbook_looks_label UNIQUE (label)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_community_posts_handle',
-  'ALTER TABLE community_posts ADD CONSTRAINT uq_community_posts_handle UNIQUE (handle)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_collaborators_name',
-  'ALTER TABLE collaborators ADD CONSTRAINT uq_collaborators_name UNIQUE (name)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_membership_perks_title',
-  'ALTER TABLE membership_perks ADD CONSTRAINT uq_membership_perks_title UNIQUE (title)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_editorial_articles_title',
-  'ALTER TABLE editorial_articles ADD CONSTRAINT uq_editorial_articles_title UNIQUE (title)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_social_links_platform',
-  'ALTER TABLE social_links ADD CONSTRAINT uq_social_links_platform UNIQUE (platform)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_footer_link_groups_title',
-  'ALTER TABLE footer_link_groups ADD CONSTRAINT uq_footer_link_groups_title UNIQUE (title)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'uq_product_color_swatches',
-  'ALTER TABLE product_color_swatches ADD CONSTRAINT uq_product_color_swatches UNIQUE (product_id, hex_color)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'collections_slug_key',
-  'ALTER TABLE collections ADD CONSTRAINT collections_slug_key UNIQUE (slug)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'marquee_bands_slug_key',
-  'ALTER TABLE marquee_bands ADD CONSTRAINT marquee_bands_slug_key UNIQUE (slug)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'product_categories_slug_key',
-  'ALTER TABLE product_categories ADD CONSTRAINT product_categories_slug_key UNIQUE (slug)'
-);
-SELECT afresh_add_constraint_if_missing(
-  'products_slug_key',
-  'ALTER TABLE products ADD CONSTRAINT products_slug_key UNIQUE (slug)'
-);
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_about_stats_label',
+    'ALTER TABLE about_stats ADD CONSTRAINT uq_about_stats_label UNIQUE (label)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_lookbook_looks_label',
+    'ALTER TABLE lookbook_looks ADD CONSTRAINT uq_lookbook_looks_label UNIQUE (label)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_community_posts_handle',
+    'ALTER TABLE community_posts ADD CONSTRAINT uq_community_posts_handle UNIQUE (handle)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_collaborators_name',
+    'ALTER TABLE collaborators ADD CONSTRAINT uq_collaborators_name UNIQUE (name)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_membership_perks_title',
+    'ALTER TABLE membership_perks ADD CONSTRAINT uq_membership_perks_title UNIQUE (title)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_editorial_articles_title',
+    'ALTER TABLE editorial_articles ADD CONSTRAINT uq_editorial_articles_title UNIQUE (title)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_social_links_platform',
+    'ALTER TABLE social_links ADD CONSTRAINT uq_social_links_platform UNIQUE (platform)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_footer_link_groups_title',
+    'ALTER TABLE footer_link_groups ADD CONSTRAINT uq_footer_link_groups_title UNIQUE (title)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'uq_product_color_swatches',
+    'ALTER TABLE product_color_swatches ADD CONSTRAINT uq_product_color_swatches UNIQUE (product_id, hex_color)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'collections_slug_key',
+    'ALTER TABLE collections ADD CONSTRAINT collections_slug_key UNIQUE (slug)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'marquee_bands_slug_key',
+    'ALTER TABLE marquee_bands ADD CONSTRAINT marquee_bands_slug_key UNIQUE (slug)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'product_categories_slug_key',
+    'ALTER TABLE product_categories ADD CONSTRAINT product_categories_slug_key UNIQUE (slug)'
+  );
+  PERFORM afresh_add_constraint_if_missing(
+    'products_slug_key',
+    'ALTER TABLE products ADD CONSTRAINT products_slug_key UNIQUE (slug)'
+  );
+END
+$afresh_sync$;
 
 -- -----------------------------------------------------------------------------
 -- SEED: default content (idempotent — skips rows that already exist)
@@ -961,6 +1014,13 @@ VALUES (
   'AFRESH',
   'Where heritage meets the future. Fashion as identity, culture as currency.'
 ) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO hero_background_images (image_url, sort_order)
+SELECT background_url, 0
+FROM hero_section
+WHERE id = 1
+  AND background_url IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM hero_background_images LIMIT 1);
 
 INSERT INTO about_section (id, lead_paragraph, body_paragraph_1, body_paragraph_2)
 VALUES (
@@ -1166,6 +1226,17 @@ INSERT INTO admin_users (email, password_hash, full_name, role) VALUES (
   full_name = EXCLUDED.full_name,
   role = EXCLUDED.role,
   is_active = TRUE;
+
+INSERT INTO product_images (product_id, image_url, sort_order)
+SELECT p.id, p.image_url, 0
+FROM products p
+WHERE p.image_url IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM product_images pi WHERE pi.product_id = p.id);
+
+-- =============================================================================
+-- Done — you should see this row if the full script completed
+-- =============================================================================
+SELECT 'AFRESH schema applied successfully' AS status, NOW() AS completed_at;
 
 -- =============================================================================
 -- TABLE MAP (admin ↔ landing page)

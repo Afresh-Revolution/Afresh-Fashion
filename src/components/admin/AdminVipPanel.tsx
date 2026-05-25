@@ -260,24 +260,26 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
         {members.length === 0 ? (
           <p className={styles.empty}>No signups yet — they appear when visitors join on the landing page.</p>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Source</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((v) => (
-                <tr key={v.id}>
-                  <td>{v.email}</td>
-                  <td>{v.source}</td>
-                  <td>{new Date(v.joined_at).toLocaleString()}</td>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Source</th>
+                  <th>Joined</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {members.map((v) => (
+                  <tr key={v.id}>
+                    <td>{v.email}</td>
+                    <td>{v.source}</td>
+                    <td>{new Date(v.joined_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

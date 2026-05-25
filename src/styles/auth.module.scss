@@ -14,7 +14,11 @@
   max-width: 420px;
   border: 1px solid $graphite;
   background: rgba($graphite, 0.4);
-  padding: 2.5rem 2rem;
+  padding: 2rem 1.25rem;
+
+  @media (min-width: $bp-sm) {
+    padding: 2.5rem 2rem;
+  }
 }
 
 .authLogo {

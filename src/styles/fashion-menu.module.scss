@@ -1,0 +1,79 @@
+@use "variables" as *;
+
+.toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  color: $offwhite;
+  transition: color 0.3s;
+
+  &:hover {
+    color: $gold;
+  }
+
+  &:focus-visible {
+    outline: 1px solid $gold;
+    outline-offset: 4px;
+  }
+}
+
+.label {
+  font-family: $font-heading;
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: inherit;
+  line-height: 1;
+}
+
+.iconWrap {
+  position: relative;
+  width: 1.75rem;
+  height: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform-origin: center;
+  transition: transform 0.45s cubic-bezier(0.77, 0, 0.18, 1), width 0.35s ease, opacity 0.3s;
+}
+
+.diamond {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 7px;
+  color: $gold;
+  line-height: 1;
+  transition: opacity 0.3s, transform 0.45s cubic-bezier(0.77, 0, 0.18, 1);
+}
+
+.open {
+  .line:first-child {
+    transform: translateY(5px) rotate(45deg);
+    width: 120%;
+  }
+
+  .line:last-child {
+    transform: translateY(-5px) rotate(-45deg);
+    width: 120%;
+  }
+
+  .diamond {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+}

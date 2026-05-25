@@ -13,10 +13,14 @@
 
 .navInner {
   @include container;
-  height: $nav-height;
+  min-height: $nav-height;
+  height: auto;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .logoLink {
@@ -104,47 +108,113 @@
   }
 }
 
-.menuToggle {
-  display: block;
-  color: $offwhite;
-  background: none;
-  border: none;
-  cursor: pointer;
+.navMobileBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(1rem, 3.5vw, 1.5rem);
+  margin-left: auto;
+  flex-shrink: 0;
 
   @media (min-width: $bp-lg) {
     display: none;
   }
+
+  .iconBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0.375rem;
+  }
+}
+
+// Flatten wrapper so search, bag, and menu share one even flex row
+.navMobileIcons {
+  display: contents;
 }
 
 .mobileMenu {
   position: fixed;
   inset: 0;
   z-index: 99;
-  background: $matte;
+  background: rgba($matte, 0.97);
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  gap: 2rem;
+  padding: calc($nav-height + 1.5rem) 1.5rem 2rem;
+  overflow-y: auto;
+  pointer-events: none;
 
-  a {
-    font-family: $font-heading;
-    font-size: 2.25rem;
-    letter-spacing: 0.15em;
-    color: $offwhite;
-    transition: color 0.3s;
-
-    &:hover {
-      color: $gold;
-    }
+  &.open,
+  &:global(.open) {
+    pointer-events: auto;
   }
 }
 
+.mobileMenuInner {
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobileMenuLabel {
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: $gold;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.mobileMenuLink {
+  font-family: $font-heading;
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+  letter-spacing: 0.12em;
+  color: $offwhite;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba($graphite, 0.8);
+  transition: color 0.3s, opacity 0.4s ease, transform 0.4s ease;
+  opacity: 0;
+  transform: translateY(12px);
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.mobileMenu:global(.open) .mobileMenuLink,
+.mobileMenu.open .mobileMenuLink {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mobileMenuIndex {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba($gold, 0.6);
+  font-family: $font-body;
+  min-width: 1.5rem;
+}
+
 .mobileVip {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
+  text-align: center;
   @include btn-outline;
   border-color: $gold;
   color: $gold;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease 0.35s, transform 0.4s ease 0.35s, background 0.3s, color 0.3s;
 
   &:hover {
     background: $gold;
@@ -152,97 +222,482 @@
   }
 }
 
-// ─── Hero ───
+.mobileMenu:global(.open) .mobileVip,
+.mobileMenu.open .mobileVip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+// ─── Hero (futuristic) ───
 .hero {
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
+  isolation: isolate;
+}
+
+.heroStage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
 .heroImageWrap {
   position: absolute;
+  inset: -4%;
+  will-change: transform;
+}
+
+.heroImageStack {
+  position: absolute;
   inset: 0;
 }
 
-.heroImage {
+.heroImageSlide {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.35) contrast(1.1);
+  object-position: center 35%;
+  opacity: 0;
+  transition: opacity 1.6s ease-in-out;
+  filter: brightness(0.52) contrast(1.12) saturate(1.1);
+  will-change: opacity;
 }
 
-.heroOverlay1 {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, $matte, transparent, rgba($matte, 0.6));
+.heroImageSlideActive {
+  opacity: 1;
+  z-index: 1;
 }
 
-.heroOverlay2 {
+.heroVignette {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, rgba($matte, 0.5), transparent, rgba($matte, 0.5));
+  background:
+    radial-gradient(ellipse 72% 58% at 50% 46%, transparent 0%, rgba($matte, 0.28) 58%, rgba($matte, 0.72) 100%),
+    linear-gradient(to top, $matte 0%, transparent 40%, rgba($matte, 0.35) 100%),
+    linear-gradient(105deg, rgba($matte, 0.55) 0%, transparent 48%, transparent 52%, rgba($matte, 0.55) 100%);
+  pointer-events: none;
+}
+
+.heroAurora {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 82%, rgba($gold, 0.14) 0%, transparent 42%),
+    radial-gradient(circle at 82% 22%, rgba(120, 180, 255, 0.08) 0%, transparent 38%),
+    radial-gradient(circle at 50% 0%, rgba($gold, 0.06) 0%, transparent 55%);
+  mix-blend-mode: screen;
+  animation: heroAuroraShift 14s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.heroGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba($gold, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba($gold, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 55%, black 20%, transparent 75%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.heroScanline {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba($gold, 0.03) 48%,
+    rgba($gold, 0.06) 50%,
+    transparent 52%
+  );
+  background-size: 100% 8px;
+  opacity: 0.35;
+  animation: heroScanDrift 8s linear infinite;
+  pointer-events: none;
+}
+
+.heroParticles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.heroFrame {
+  position: absolute;
+  inset: clamp(4.5rem, 12vw, 6rem) clamp(1rem, 4vw, 2.5rem) clamp(5rem, 14vw, 7rem);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.heroCorner {
+  position: absolute;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-color: rgba($gold, 0.45);
+  border-style: solid;
+  border-width: 0;
+
+  &[data-pos="tl"] {
+    top: 0;
+    left: 0;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+
+  &[data-pos="tr"] {
+    top: 0;
+    right: 0;
+    border-top-width: 1px;
+    border-right-width: 1px;
+  }
+
+  &[data-pos="bl"] {
+    bottom: 0;
+    left: 0;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
+
+  &[data-pos="br"] {
+    bottom: 0;
+    right: 0;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+  }
+}
+
+.heroHudTop {
+  position: absolute;
+  top: calc(#{$nav-height} + 0.75rem);
+  left: 0;
+  right: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 clamp(1.25rem, 4vw, 2.5rem);
+  pointer-events: none;
+}
+
+.heroSlideCount {
+  justify-self: end;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: rgba($silver, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.heroHudLive {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba($offwhite, 0.7);
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba($gold, 0.25);
+  background: rgba($matte, 0.35);
+  backdrop-filter: blur(12px);
+}
+
+.heroHudDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $gold;
+  box-shadow: 0 0 12px rgba($gold, 0.9);
+  animation: heroLivePulse 2s ease-in-out infinite;
+}
+
+.heroHudSeason {
+  grid-column: 2;
+  font-size: 9px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.55);
 }
 
 .heroContent {
   position: relative;
   z-index: 10;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 0 1.5rem;
+  padding: calc(#{$nav-height} + 3rem) 1.5rem 7rem;
 }
 
 .heroTagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
   font-family: $font-body;
-  font-size: 10px;
-  letter-spacing: 0.5em;
+  font-size: clamp(8px, 2vw, 10px);
+  letter-spacing: 0.42em;
   text-transform: uppercase;
   color: $gold;
-  margin-bottom: 1.5rem;
+  margin-bottom: clamp(1rem, 3vw, 1.75rem);
+  padding: 0.55rem 1rem;
+  border: 1px solid rgba($gold, 0.22);
+  background: rgba($matte, 0.4);
+  backdrop-filter: blur(14px);
+  max-width: min(100%, 28rem);
+  line-height: 1.5;
+}
+
+.heroTaglineAccent {
+  flex-shrink: 0;
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, $gold);
+}
+
+.heroTitleBlock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroOrbit {
+  position: absolute;
+  width: min(92vw, 38rem);
+  height: min(92vw, 38rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.heroOrbitRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed rgba($gold, 0.22);
+  animation: heroOrbitSpin 28s linear infinite;
+}
+
+.heroOrbitCore {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $gold;
+  box-shadow: 0 0 24px rgba($gold, 0.65);
 }
 
 .heroTitle {
+  position: relative;
   font-family: $font-heading;
-  font-size: clamp(5rem, 18vw, 16rem);
-  line-height: 0.85;
-  letter-spacing: 0.05em;
-  color: $offwhite;
+  font-size: clamp(4.5rem, 22vw, 14rem);
+  line-height: 0.82;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+.heroTitleGhost {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba($gold, 0.42);
+  text-stroke: 1.5px rgba($gold, 0.42);
+  transform: translate(5px, 5px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.heroTitleMain {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #f8f4ec 38%,
+    rgba($gold, 0.95) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 0 48px rgba($gold, 0.45))
+    drop-shadow(0 6px 28px rgba(0, 0, 0, 0.55));
+
+  :global(.hero-title-char) {
+    display: inline-block;
+    transform-origin: 50% 100%;
+  }
 }
 
 .heroSubtitle {
   font-family: $font-editorial;
-  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+  font-size: clamp(1.05rem, 2.8vw, 1.55rem);
   font-style: italic;
   font-weight: 300;
-  color: $silver;
-  margin-top: 1.5rem;
-  max-width: 36rem;
+  color: rgba($silver, 0.92);
+  margin-top: clamp(1rem, 3vw, 1.75rem);
+  max-width: 34rem;
+  line-height: 1.55;
+  padding: 0 0.5rem;
 }
 
 .heroCtas {
   display: flex;
-  gap: 1rem;
-  margin-top: 2.5rem;
+  gap: 0.75rem;
+  margin-top: clamp(1.75rem, 4vw, 2.75rem);
   flex-wrap: wrap;
   justify-content: center;
+  width: 100%;
+  max-width: 26rem;
 }
 
-.heroScroll {
+.heroCtaPrimary {
+  position: relative;
+  overflow: hidden;
+  flex: 1 1 10rem;
+  min-width: 0;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  color: $matte;
+  background: linear-gradient(135deg, #d4b87a 0%, $gold 55%, #a88f52 100%);
+  border: 1px solid rgba($offwhite, 0.15);
+  box-shadow:
+    0 0 0 1px rgba($gold, 0.2),
+    0 12px 40px rgba($gold, 0.22);
+  transition: transform 0.35s, box-shadow 0.35s;
+
+  span:first-child {
+    position: relative;
+    z-index: 1;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px rgba($gold, 0.35),
+      0 18px 48px rgba($gold, 0.32);
+  }
+}
+
+.heroCtaShine {
   position: absolute;
-  bottom: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba($offwhite, 0.45) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  animation: heroCtaShine 4.5s ease-in-out infinite;
+}
+
+.heroCtaGhost {
+  flex: 1 1 10rem;
+  min-width: 0;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 400;
+  padding: 1rem 1.5rem;
+  color: $offwhite;
+  border: 1px solid rgba($offwhite, 0.28);
+  background: rgba($matte, 0.35);
+  backdrop-filter: blur(14px);
+  transition: border-color 0.35s, background 0.35s, transform 0.35s;
+
+  &:hover {
+    border-color: rgba($gold, 0.55);
+    background: rgba($gold, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.heroMetrics {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.75rem, 3vw, 1.5rem);
+  margin-top: clamp(2rem, 5vw, 3rem);
+  padding: 0.85rem 1.25rem;
+  border: 1px solid rgba($gold, 0.12);
+  background: rgba($matte, 0.45);
+  backdrop-filter: blur(16px);
+  max-width: 100%;
+}
+
+.heroMetric {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.2rem;
+  min-width: 4.5rem;
+}
+
+.heroMetricValue {
+  font-family: $font-heading;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  letter-spacing: 0.08em;
+  color: $gold;
+  line-height: 1;
+}
+
+.heroMetricLabel {
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.65);
+}
+
+.heroMetricDivider {
+  width: 1px;
+  height: 2rem;
+  background: linear-gradient(to bottom, transparent, rgba($gold, 0.35), transparent);
+}
+
+.heroBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  padding: 0 clamp(1.25rem, 4vw, 2.5rem) 2.25rem;
+  pointer-events: none;
+}
+
+.heroScroll {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba($gold, 0.65);
 
   span {
     font-size: 9px;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.35em;
     text-transform: uppercase;
     color: rgba($silver, 0.5);
     font-weight: 300;
@@ -250,14 +705,12 @@
 }
 
 .heroSide {
-  position: absolute;
-  left: 1.5rem;
-  top: 50%;
-  transform: translateY(-50%);
+  grid-column: 1;
   display: none;
   flex-direction: column;
-  gap: 1rem;
-  align-items: center;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-self: start;
 
   @media (min-width: $bp-xl) {
     display: flex;
@@ -275,8 +728,66 @@
 
 .heroSideLine {
   width: 1px;
-  height: 4rem;
-  background: rgba($gold, 0.3);
+  height: 3rem;
+  background: linear-gradient(to bottom, rgba($gold, 0.5), transparent);
+}
+
+.heroCoords {
+  grid-column: 3;
+  justify-self: end;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.35);
+  margin: 0;
+  align-self: end;
+}
+
+@media (max-width: $bp-md) {
+  .heroFrame {
+    inset: 5.5rem 0.75rem 5.5rem;
+  }
+
+  .heroCorner {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .heroHudSeason {
+    display: none;
+  }
+
+  .heroMetrics {
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .heroMetric {
+    min-width: 3.5rem;
+  }
+
+  .heroCoords {
+    display: none;
+  }
+
+  .heroBottom {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .heroScroll {
+    grid-column: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroAurora,
+  .heroScanline,
+  .heroOrbitRing,
+  .heroCtaShine,
+  .heroHudDot {
+    animation: none;
+  }
 }
 
 // ─── Marquee ───
@@ -303,7 +814,7 @@
 
 // ─── Sections common ───
 .section {
-  padding: 6rem 0;
+  padding: 4rem 0;
 
   @media (min-width: $bp-md) {
     padding: 9rem 0;
@@ -311,10 +822,10 @@
 }
 
 .sectionSm {
-  padding: 6rem 0;
+  padding: 3.5rem 0;
 
   @media (min-width: $bp-md) {
-    padding: 9rem 0;
+    padding: 6rem 0;
   }
 }
 
@@ -334,12 +845,13 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  margin-bottom: 4rem;
+  margin-bottom: 2.5rem;
 
   @media (min-width: $bp-md) {
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
+    margin-bottom: 4rem;
   }
 }
 
@@ -530,10 +1042,12 @@
   display: flex;
   gap: 1rem;
   overflow-x: auto;
-  padding: 0 1.5rem 1rem;
+  padding: 0 1rem 1rem;
   cursor: grab;
+  -webkit-overflow-scrolling: touch;
 
   @media (min-width: $bp-md) {
+    padding: 0 1.5rem 1rem;
     gap: 1.5rem;
     padding: 0 2.5rem 1rem;
   }
@@ -544,8 +1058,9 @@
 }
 
 .lookItem {
+  flex: 0 0 auto;
   flex-shrink: 0;
-  width: 280px;
+  width: min(72vw, 280px);
   cursor: pointer;
 
   @media (min-width: $bp-md) {
@@ -607,8 +1122,13 @@
 
 .filmNextBtn {
   position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 1rem;
+  right: 1rem;
+
+  @media (min-width: $bp-md) {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
   z-index: 4;
   font-size: 10px;
   letter-spacing: 0.15em;
@@ -680,10 +1200,28 @@
 .shopFilters {
   display: flex;
   gap: 1.5rem;
-  flex-wrap: wrap;
+  width: 100%;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: $bp-lg) {
+    width: auto;
+    overflow: visible;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 }
 
 .shopFilter {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 10px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -707,6 +1245,13 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 
+  @media (max-width: $bp-sm) {
+    grid-template-columns: 1fr;
+    max-width: 20rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   @media (min-width: $bp-lg) {
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
@@ -718,13 +1263,6 @@
   aspect-ratio: 3 / 4;
   overflow: hidden;
   background: $graphite;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: brightness(0.85);
-  }
 }
 
 .productOverlay {
@@ -899,11 +1437,18 @@
   backdrop-filter: blur(10px);
   padding: 1.25rem 1.25rem;
   text-align: center;
-  min-width: 80px;
+  min-width: 4.5rem;
+  flex: 1 1 calc(50% - 0.75rem);
+  max-width: 8rem;
+
+  @media (min-width: $bp-sm) {
+    flex: 0 1 auto;
+  }
 
   @media (min-width: $bp-md) {
     padding: 1.5rem 2rem;
     min-width: 110px;
+    max-width: none;
   }
 
   p:first-child {
@@ -925,12 +1470,34 @@
 .dropsCtas {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  align-items: stretch;
+  gap: 0.75rem;
+  max-width: 20rem;
+  margin-left: auto;
+  margin-right: auto;
+
+  button,
+  :global(.btn-primary),
+  :global(.btn-outline) {
+    width: 100%;
+  }
+
+  @media (min-width: $bp-sm) {
+    align-items: center;
+    max-width: none;
+
+    button,
+    :global(.btn-primary),
+    :global(.btn-outline) {
+      width: auto;
+    }
+  }
 
   @media (min-width: $bp-md) {
     flex-direction: row;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 }
 
@@ -949,6 +1516,10 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
   margin-bottom: 4rem;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: 1fr;
+  }
 
   @media (min-width: $bp-md) {
     grid-template-columns: repeat(4, 1fr);
@@ -1028,6 +1599,10 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: 1fr;
+  }
 
   @media (min-width: $bp-md) {
     grid-template-columns: repeat(5, 1fr);
@@ -1274,10 +1849,18 @@
 
 .perksGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 1rem;
   margin: 3rem 0;
   text-align: left;
+
+  @media (min-width: $bp-sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: $bp-lg) {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .perkCard {

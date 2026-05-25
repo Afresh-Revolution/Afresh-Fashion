@@ -1,0 +1,157 @@
+@use "variables" as *;
+
+.install {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 9990;
+  max-width: min(20rem, calc(100vw - 2rem));
+  padding: 0.85rem 1rem;
+  background: rgba($matte, 0.94);
+  border: 1px solid rgba($gold, 0.35);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  animation: pwaSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.installHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.installTitle {
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: $gold;
+  font-weight: 600;
+}
+
+.installClose {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: rgba($silver, 0.6);
+  cursor: pointer;
+  padding: 0.15rem;
+  line-height: 1;
+  font-size: 1.1rem;
+
+  &:hover {
+    color: $offwhite;
+  }
+}
+
+.installText {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba($silver, 0.9);
+  margin-bottom: 0.75rem;
+}
+
+.installActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.installBtn {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0.55rem 0.9rem;
+  background: $gold;
+  color: $matte;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background: $offwhite;
+  }
+}
+
+.installLater {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.75rem;
+  background: transparent;
+  border: 1px solid rgba($silver, 0.25);
+  color: rgba($silver, 0.8);
+  cursor: pointer;
+
+  &:hover {
+    border-color: rgba($gold, 0.4);
+    color: $offwhite;
+  }
+}
+
+.pullZone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5rem;
+  z-index: 9985;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.pullZoneActive {
+  opacity: 1;
+}
+
+.pullLabel {
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba($gold, 0.85);
+  padding: 0.35rem 0.75rem;
+  background: rgba($matte, 0.75);
+  border: 1px solid rgba($gold, 0.25);
+  border-radius: 2px;
+}
+
+.pullSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba($gold, 0.25);
+  border-top-color: $gold;
+  border-radius: 50%;
+  animation: pwaSpin 0.7s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes pwaSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pwaSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .install {
+    left: 0.75rem;
+    bottom: 0.75rem;
+    max-width: calc(100vw - 1.5rem);
+  }
+}

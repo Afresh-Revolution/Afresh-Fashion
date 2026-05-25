@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { adminError } from "@/lib/admin-api-response";
+import { loadProductImageMap, replaceProductImages, resolveProductImageUrls } from "@/lib/product-images";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -65,6 +66,12 @@ export async function PATCH(request: Request, { params }: Params) {
       }
     }
 
+    if (Array.isArray(body.image_urls)) {
+      await replaceProductImages(id, body.image_urls);
+    } else if (body.image_url !== undefined) {
+      await replaceProductImages(id, body.image_url ? [body.image_url] : []);
+    }
+
     const { rows } = await query(
       `SELECT p.id, p.slug, p.name, p.price_amount, pc.slug AS category_slug, pc.name AS category_name,
               p.badge, p.stock_quantity, p.image_url, p.sort_order, p.status
@@ -78,9 +85,13 @@ export async function PATCH(request: Request, { params }: Params) {
       `SELECT hex_color FROM product_color_swatches WHERE product_id = $1 ORDER BY sort_order`,
       [id]
     );
+    const imageMap = await loadProductImageMap();
+    const image_urls = resolveProductImageUrls(rows[0].image_url, imageMap.get(id));
     return NextResponse.json({
       ...rows[0],
       price_amount: Number(rows[0].price_amount),
+      image_url: image_urls[0] ?? rows[0].image_url,
+      image_urls,
       swatches: sw.rows.map((r) => r.hex_color),
     });
   } catch (err) {

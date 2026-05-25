@@ -6,7 +6,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 export function useAfreshSite(dropAt?: string | null) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const [navSolid, setNavSolid] = useState(false);
@@ -22,21 +21,6 @@ export function useAfreshSite(dropAt?: string | null) {
     const t = setTimeout(() => setToastVisible(false), 3000);
     return () => clearTimeout(t);
   }, []);
-
-  const addToCart = useCallback(
-    (product: string) => {
-      setCartCount((c) => {
-        const next = c + 1;
-        const badge = document.querySelector("#cartBtn span");
-        if (badge) {
-          gsap.fromTo(badge, { scale: 1.5 }, { scale: 1, duration: 0.3, ease: "back.out(2)" });
-        }
-        return next;
-      });
-      showToast(`${product} added to bag`);
-    },
-    [showToast]
-  );
 
   const joinVIP = useCallback(async () => {
     const email = memberEmail.trim().toLowerCase();
@@ -93,8 +77,23 @@ export function useAfreshSite(dropAt?: string | null) {
       if (animationsReady.current) return;
       animationsReady.current = true;
 
-      gsap.to(".hero-title", { opacity: 1, duration: 1.2, ease: "power3.out" });
-      gsap.to(".hero-fade", { opacity: 1, duration: 1, stagger: 0.2, delay: 0.5, ease: "power2.out" });
+      gsap.to(".hero-title-char", {
+        opacity: 1,
+        y: 0,
+        rotateX: 0,
+        stagger: 0.055,
+        duration: 1.15,
+        ease: "power4.out",
+        delay: 0.15,
+      });
+      gsap.to(".hero-fade", {
+        opacity: 1,
+        y: 0,
+        duration: 0.95,
+        stagger: 0.14,
+        delay: 0.65,
+        ease: "power3.out",
+      });
 
       gsap.to("#hero", {
         scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: true },
@@ -256,35 +255,44 @@ export function useAfreshSite(dropAt?: string | null) {
   useEffect(() => {
     const hero = document.getElementById("hero");
     const heroContent = document.getElementById("heroContent");
+    const heroImageWrap = document.getElementById("heroImageWrap");
     const particleContainer = document.getElementById("heroParticles");
     if (!hero || !heroContent || !particleContainer) return;
 
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const onHeroMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 20;
-      const y = (e.clientY / window.innerHeight - 0.5) * 10;
-      gsap.to(heroContent, { x, y, duration: 1, ease: "power2.out" });
+      if (prefersReduced) return;
+      const x = (e.clientX / window.innerWidth - 0.5) * 24;
+      const y = (e.clientY / window.innerHeight - 0.5) * 14;
+      gsap.to(heroContent, { x: x * 0.35, y: y * 0.35, duration: 1.1, ease: "power2.out" });
+      if (heroImageWrap) {
+        gsap.to(heroImageWrap, { x: x * 0.6, y: y * 0.4, duration: 1.4, ease: "power2.out" });
+      }
     };
     hero.addEventListener("mousemove", onHeroMove);
 
     const tweens: gsap.core.Tween[] = [];
-    for (let i = 0; i < 30; i++) {
+    const count = prefersReduced ? 0 : 48;
+    for (let i = 0; i < count; i++) {
       const particle = document.createElement("div");
-      particle.className = "particle";
+      const tier = i % 5 === 0 ? "particle--glow" : i % 3 === 0 ? "" : "particle--dim";
+      particle.className = `particle ${tier}`.trim();
       particle.style.left = `${Math.random() * 100}%`;
       particle.style.top = `${Math.random() * 100}%`;
-      const size = `${Math.random() * 3 + 1}px`;
+      const size = `${Math.random() * 4 + 1}px`;
       particle.style.width = size;
       particle.style.height = size;
-      particle.style.opacity = String(Math.random() * 0.5 + 0.1);
+      particle.style.opacity = String(Math.random() * 0.55 + 0.15);
       particleContainer.appendChild(particle);
       tweens.push(
         gsap.to(particle, {
-          y: -100 - Math.random() * 200,
-          x: (Math.random() - 0.5) * 100,
+          y: -120 - Math.random() * 240,
+          x: (Math.random() - 0.5) * 120,
           opacity: 0,
-          duration: 4 + Math.random() * 6,
+          duration: 5 + Math.random() * 7,
           repeat: -1,
-          delay: Math.random() * 5,
+          delay: Math.random() * 6,
           ease: "none",
         })
       );
@@ -384,7 +392,6 @@ export function useAfreshSite(dropAt?: string | null) {
 
   return {
     menuOpen,
-    cartCount,
     toastMessage,
     toastVisible,
     navSolid,
@@ -394,7 +401,6 @@ export function useAfreshSite(dropAt?: string | null) {
     memberEmail,
     setMemberEmail,
     showToast,
-    addToCart,
     joinVIP,
     submitContact,
     toggleMenu,

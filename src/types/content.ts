@@ -29,6 +29,7 @@ export interface ProductItem {
   badge: string;
   stock_quantity: number;
   image_url: string | null;
+  image_urls: string[];
   sort_order: number;
   status: ContentStatus;
   swatches: string[];
@@ -89,6 +90,7 @@ export interface CinematicSection {
 
 export interface HeroSection extends Record<string, unknown> {
   background_url: string | null;
+  background_urls: string[];
   tagline: string;
   title: string;
   subtitle: string;
