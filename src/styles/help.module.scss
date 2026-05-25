@@ -1,0 +1,266 @@
+@use "variables" as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba($matte, 0.88);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: helpFadeIn 0.3s ease;
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 36rem;
+  max-height: min(88vh, 720px);
+  overflow: auto;
+  background: $graphite;
+  border: 1px solid rgba($gold, 0.28);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba($graphite, 0.96);
+  border-bottom: 1px solid rgba($gold, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.title {
+  font-family: $font-heading;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  letter-spacing: 0.12em;
+  color: $offwhite;
+  margin: 0;
+}
+
+.close {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid rgba($silver, 0.25);
+  color: $silver;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.25s, color 0.25s;
+
+  &:hover {
+    border-color: $gold;
+    color: $gold;
+  }
+}
+
+.body {
+  padding: 1.5rem;
+}
+
+.paragraph {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: rgba($silver, 0.95);
+  margin: 0 0 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.list {
+  margin: 0 0 1rem 1.1rem;
+  padding: 0;
+  color: rgba($silver, 0.95);
+  font-size: 0.9rem;
+  line-height: 1.6;
+
+  li {
+    margin-bottom: 0.35rem;
+  }
+}
+
+.contactBlock {
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba($gold, 0.25);
+  background: rgba($matte, 0.5);
+}
+
+.contactLabel {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: $gold;
+  margin-bottom: 0.5rem;
+}
+
+.contactEmail {
+  font-size: 1rem;
+  color: $offwhite;
+  word-break: break-all;
+  transition: color 0.25s;
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.diagramWrap {
+  margin: 1.25rem 0;
+  border: 1px solid rgba($gold, 0.2);
+  background: $matte;
+  padding: 1rem;
+}
+
+.diagramImg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.diagramCaption {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.55);
+  margin-top: 0.65rem;
+  text-align: center;
+}
+
+.sizeChart {
+  margin-top: 1.25rem;
+  border: 1px solid rgba($gold, 0.15);
+}
+
+.sizeChartTitle {
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: $gold;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba($gold, 0.12);
+}
+
+.sizeTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+
+  th,
+  td {
+    padding: 0.55rem 0.65rem;
+    text-align: center;
+    border-bottom: 1px solid rgba($silver, 0.08);
+  }
+
+  th {
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba($gold, 0.85);
+    font-weight: 500;
+  }
+
+  td {
+    color: rgba($silver, 0.9);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.measureDiagram {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.figure {
+  position: relative;
+  aspect-ratio: 3 / 5;
+  max-width: 140px;
+  margin: 0 auto;
+  border: 1px dashed rgba($gold, 0.35);
+  border-radius: 2px;
+}
+
+.figureLine {
+  position: absolute;
+  background: rgba($gold, 0.5);
+}
+
+.figureLineChest {
+  position: absolute;
+  top: 28%;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: rgba($gold, 0.5);
+}
+
+.figureLineWaist {
+  position: absolute;
+  top: 46%;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: rgba($gold, 0.5);
+}
+
+.figureLineHip {
+  position: absolute;
+  top: 58%;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: rgba($gold, 0.5);
+}
+
+.figureLineLength {
+  position: absolute;
+  top: 12%;
+  bottom: 8%;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba($gold, 0.5);
+}
+
+.figureLabels {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.65);
+  line-height: 1.7;
+}
+
+@keyframes helpFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .measureDiagram {
+    grid-template-columns: 1fr;
+  }
+}

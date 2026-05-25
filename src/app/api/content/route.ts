@@ -28,6 +28,7 @@ export async function GET() {
       membershipPerks: content.membershipPerks,
       contact: content.contact,
       footer: content.footer,
+      helpPages: content.helpPages,
       cinematic: content.cinematic,
       cinematicVideos: published(content.cinematicVideos),
     });

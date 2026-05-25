@@ -14,6 +14,7 @@ import type {
   DropSection,
   EditorialItem,
   FooterContent,
+  HelpPage,
   HeroSection,
   LookbookItem,
   MarqueeBand,
@@ -74,6 +75,7 @@ export async function getSiteContent(): Promise<SiteContent> {
     socialRows,
     cinematicRows,
     videoRows,
+    helpRows,
   ] = await Promise.all([
     query<{ brand_name: string; season_label: string; currency_symbol: string }>(
       `SELECT brand_name, season_label, currency_symbol FROM site_settings WHERE id = 1`
@@ -240,6 +242,10 @@ export async function getSiteContent(): Promise<SiteContent> {
       sort_order: number;
       status: string;
     }>(`SELECT id, title, video_url, poster_url, sort_order, status FROM cinematic_videos ORDER BY sort_order ASC`),
+    query<HelpPage>(
+      `SELECT slug, title, body, diagram_url, diagram_caption, contact_email
+       FROM help_pages WHERE status = 'published' ORDER BY sort_order ASC`
+    ),
   ]);
 
   const swatchRows = await query<{ product_id: string; hex_color: string }>(
@@ -396,6 +402,7 @@ export async function getSiteContent(): Promise<SiteContent> {
     membershipPerks: perksRows.rows,
     contact: contactRows.rows[0] ?? null,
     footer,
+    helpPages: helpRows.rows,
     cinematic: cinematicRows.rows[0] ?? null,
     cinematicVideos: videoRows.rows.map((r) => ({
       id: r.id,

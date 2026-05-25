@@ -10,6 +10,7 @@ import FashionMenuToggle from "@/components/FashionMenuToggle";
 import {
   AboutPanel,
   HeroPanel,
+  HelpPanel,
   CinematicPanel,
   CollaboratorsPanel,
   CollectionsPanel,
@@ -36,6 +37,7 @@ type Tab =
   | "drops"
   | "vip"
   | "orders"
+  | "help"
   | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
@@ -52,6 +54,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "drops", label: "Next Drop" },
   { id: "vip", label: "VIP Members" },
   { id: "orders", label: "Orders" },
+  { id: "help", label: "Help & Footer" },
   { id: "settings", label: "Settings" },
 ];
 
@@ -308,6 +311,16 @@ export default function AdminDashboard() {
                   .catch(() => {});
               }}
             />
+          </>
+        )}
+
+        {tab === "help" && (
+          <>
+            <h1 className={styles.pageTitle}>HELP & FOOTER</h1>
+            <p className={styles.pageDesc}>
+              Shipping, size guide, contact, FAQ, and privacy popups — plus contact email.
+            </p>
+            <HelpPanel notify={notify} />
           </>
         )}
 

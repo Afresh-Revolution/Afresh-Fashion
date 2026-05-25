@@ -203,6 +203,15 @@ export interface FooterContent {
   social: SocialLink[];
 }
 
+export interface HelpPage {
+  slug: string;
+  title: string;
+  body: string;
+  diagram_url: string | null;
+  diagram_caption: string | null;
+  contact_email: string | null;
+}
+
 export interface SiteSettings {
   brand_name: string;
   season_label: string;
@@ -232,6 +241,7 @@ export interface SiteContent {
   membershipPerks: MembershipPerk[];
   contact: ContactSection | null;
   footer: FooterContent | null;
+  helpPages: HelpPage[];
   cinematic: CinematicSection | null;
   cinematicVideos: CinematicVideo[];
 }

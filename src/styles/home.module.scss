@@ -2078,17 +2078,29 @@
     font-weight: 500;
   }
 
-  a {
+  a,
+  .footerLinkBtn {
     display: block;
     font-size: 0.75rem;
     font-weight: 300;
     color: rgba($silver, 0.6);
     margin-bottom: 0.75rem;
     transition: color 0.3s;
+    text-align: left;
+  }
 
-    &:hover {
-      color: $offwhite;
-    }
+  a:hover,
+  .footerLinkBtn:hover {
+    color: $offwhite;
+  }
+
+  .footerLinkBtn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    width: 100%;
   }
 }
 

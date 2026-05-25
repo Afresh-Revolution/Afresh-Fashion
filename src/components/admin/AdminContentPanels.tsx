@@ -1606,6 +1606,191 @@ export function HeroPanel({ notify }: { notify: Notify }) {
   );
 }
 
+type HelpPageRow = {
+  slug: string;
+  title: string;
+  body: string;
+  diagram_url: string | null;
+  diagram_caption: string | null;
+  contact_email: string | null;
+  sort_order: number;
+  status: ContentStatus;
+};
+
+const HELP_SLUG_ORDER = [
+  "shipping-returns",
+  "size-guide",
+  "contact-us",
+  "faq",
+  "privacy-policy",
+] as const;
+
+export function HelpPanel({ notify }: { notify: Notify }) {
+  const [pages, setPages] = useState<HelpPageRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await api<HelpPageRow[]>("/api/admin/help-pages");
+      const bySlug = Object.fromEntries(list.map((p) => [p.slug, p]));
+      setPages(
+        HELP_SLUG_ORDER.map(
+          (slug) =>
+            bySlug[slug] ?? {
+              slug,
+              title: slug,
+              body: "",
+              diagram_url: null,
+              diagram_caption: null,
+              contact_email: slug === "contact-us" ? "afreshfashions@gmail.com" : null,
+              sort_order: 0,
+              status: "draft" as ContentStatus,
+            }
+        )
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const save = async (page: HelpPageRow) => {
+    const updated = await api<HelpPageRow>(`/api/admin/help-pages/${page.slug}`, {
+      method: "PATCH",
+      body: JSON.stringify(page),
+    });
+    setPages((prev) => prev.map((p) => (p.slug === page.slug ? { ...p, ...updated } : p)));
+    notify(`${page.title} saved`);
+  };
+
+  if (loading) return <p className={styles.empty}>Loading help pages…</p>;
+
+  return (
+    <div className={styles.contentPanel}>
+      <p className={styles.panelHint}>
+        Footer Help links open these popups on the site. Contact Us uses the email below. Size Guide
+        shows a built-in chart plus any diagram you upload.
+      </p>
+      {pages.map((page) => (
+        <div key={page.slug} className={styles.panel}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem" }}>
+            <p className={styles.panelTitle} style={{ marginBottom: 0 }}>
+              {page.title}
+            </p>
+            <StatusSelect
+              value={page.status}
+              onChange={(status) =>
+                setPages((prev) => prev.map((p) => (p.slug === page.slug ? { ...p, status } : p)))
+              }
+            />
+          </div>
+          <div className={styles.formGrid}>
+            <div className={styles.field}>
+              <label>Title</label>
+              <input
+                value={page.title}
+                onChange={(e) =>
+                  setPages((prev) =>
+                    prev.map((p) => (p.slug === page.slug ? { ...p, title: e.target.value } : p))
+                  )
+                }
+              />
+            </div>
+            {page.slug === "contact-us" && (
+              <div className={styles.field}>
+                <label>Contact email</label>
+                <input
+                  type="email"
+                  value={page.contact_email ?? ""}
+                  onChange={(e) =>
+                    setPages((prev) =>
+                      prev.map((p) =>
+                        p.slug === page.slug ? { ...p, contact_email: e.target.value } : p
+                      )
+                    )
+                  }
+                />
+              </div>
+            )}
+            {page.slug === "size-guide" && (
+              <div className={`${styles.field} ${styles.fieldFull}`}>
+                <label>Diagram caption</label>
+                <input
+                  value={page.diagram_caption ?? ""}
+                  onChange={(e) =>
+                    setPages((prev) =>
+                      prev.map((p) =>
+                        p.slug === page.slug ? { ...p, diagram_caption: e.target.value } : p
+                      )
+                    )
+                  }
+                />
+              </div>
+            )}
+            <div className={`${styles.field} ${styles.fieldFull}`}>
+              <label>Content</label>
+              <textarea
+                rows={12}
+                value={page.body}
+                onChange={(e) =>
+                  setPages((prev) =>
+                    prev.map((p) => (p.slug === page.slug ? { ...p, body: e.target.value } : p))
+                  )
+                }
+              />
+              <p className={styles.panelHint} style={{ marginTop: "0.5rem", marginBottom: 0 }}>
+                Separate paragraphs with a blank line. Use • for bullet lines.
+              </p>
+            </div>
+          </div>
+          {page.slug === "size-guide" && (
+            <>
+              {page.diagram_url && (
+                <div className={styles.mediaPreview}>
+                  <img src={page.diagram_url} alt="" />
+                </div>
+              )}
+              <MediaUpload
+                folder="help"
+                label="Size guide diagram (optional — replaces default illustration when set)"
+                onUploaded={(url) =>
+                  setPages((prev) =>
+                    prev.map((p) => (p.slug === page.slug ? { ...p, diagram_url: url } : p))
+                  )
+                }
+              />
+              {page.diagram_url && (
+                <button
+                  type="button"
+                  className={styles.btnSmall}
+                  onClick={() =>
+                    setPages((prev) =>
+                      prev.map((p) =>
+                        p.slug === page.slug ? { ...p, diagram_url: null } : p
+                      )
+                    )
+                  }
+                >
+                  Remove diagram
+                </button>
+              )}
+            </>
+          )}
+          <div className={styles.actions}>
+            <button type="button" className={styles.btnPrimary} onClick={() => void save(page)}>
+              Save {page.title}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 type OrderRow = {
   id: string;
   order_number: string;

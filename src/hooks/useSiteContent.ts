@@ -26,6 +26,7 @@ const EMPTY: SiteContent = {
   membershipPerks: [],
   contact: null,
   footer: null,
+  helpPages: [],
   cinematic: null,
   cinematicVideos: [],
 };
