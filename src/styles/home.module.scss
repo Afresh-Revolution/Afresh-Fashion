@@ -11,6 +11,12 @@
   transition: all 0.5s;
 }
 
+:global(html[data-pwa]) {
+  .navbar {
+    top: 5px;
+  }
+}
+
 .navInner {
   @include container;
   min-height: $nav-height;
