@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
-import { formatNaira, productBadgeLabel, useSiteContent } from "@/hooks/useSiteContent";
+import { formatNaira, productBadgeLabel, resolveImage, useSiteContent } from "@/hooks/useSiteContent";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   ChevronDown,
@@ -27,24 +28,22 @@ import {
 import styles from "@/styles/home.module.scss";
 import { useAfreshSite } from "@/hooks/useAfreshSite";
 
-const MARQUEE_1 = [
-  "AFRESH",
-  "GLOBAL FASHION MOVEMENT",
-  "BORN FROM AFRICA",
-  "IDENTITY IS EVERYTHING",
-];
-const MARQUEE_2 = [
-  "FASHION IS ARMOR",
-  "STYLE IS LANGUAGE",
-  "CULTURE IS CURRENCY",
-  "IDENTITY IS EVERYTHING",
-];
+const PERK_ICONS: Record<string, LucideIcon> = {
+  clock: Clock,
+  lock: Lock,
+  sparkles: Sparkles,
+  gift: Gift,
+};
 
-function imgOr(seed: string, url: string | null | undefined, w: number, h: number) {
-  return url || `https://picsum.photos/seed/${seed}/${w}/${h}`;
-}
+const SOCIAL_ICONS: Record<string, LucideIcon> = {
+  instagram: Instagram,
+  twitter: Twitter,
+  youtube: Youtube,
+  music: Music,
+};
 
 function Marquee({ items, reverse }: { items: string[]; reverse?: boolean }) {
+  if (items.length === 0) return null;
   const doubled = [...items, ...items];
   return (
     <div className={styles.marquee}>
@@ -69,8 +68,8 @@ function NavLink({ href, children, onClick }: { href: string; children: React.Re
 }
 
 export default function AfreshPage() {
-  const site = useAfreshSite();
   const { content } = useSiteContent();
+  const site = useAfreshSite(content.drop?.drop_at ?? null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoIndex, setVideoIndex] = useState(0);
   const [filmOpen, setFilmOpen] = useState(false);
@@ -80,10 +79,17 @@ export default function AfreshPage() {
   const featuredEditorial = content.editorial.filter((a) => a.layout === "featured");
   const cardEditorial = content.editorial.filter((a) => a.layout === "card");
   const miniEditorial = content.editorial.filter((a) => a.layout === "mini");
+  const primaryMarquee = content.marquees.find((m) => m.slug === "primary");
+  const secondaryMarquee = content.marquees.find((m) => m.slug === "secondary");
+  const shopFilters = [
+    { slug: "all", name: "All" },
+    ...content.productCategories.map((c) => ({ slug: c.slug, name: c.name })),
+  ];
+  const currency = content.settings?.currency_symbol ?? "₦";
 
   const playFilm = () => {
     if (videos.length === 0) {
-      site.showToast(cinematic?.toast_message || "Fashion film coming soon");
+      site.showToast(cinematic?.toast_message ?? "");
       return;
     }
     setFilmOpen(true);
@@ -160,85 +166,126 @@ export default function AfreshPage() {
         <a href="#membership" className={styles.mobileVip} onClick={(e) => { e.preventDefault(); site.scrollTo("#membership"); }}>Join VIP</a>
       </div>
 
-      <section id="hero" className={styles.hero}>
-        <div className={styles.heroImageWrap}>
-          <img src="https://picsum.photos/seed/afresh-hero-dark/1920/1080" alt="AFRESH Hero" className={`${styles.heroImage} hero-bg`} />
-        </div>
-        <div className={styles.heroOverlay1} />
-        <div className={styles.heroOverlay2} />
-        <div id="heroParticles" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
-        <div className={styles.heroContent} id="heroContent">
-          <p className={`${styles.heroTagline} hero-fade`} style={{ opacity: 0 }}>Global Fashion Movement — Born From Africa</p>
-          <h1 className={`${styles.heroTitle} hero-title`} style={{ opacity: 0 }}>AFRESH</h1>
-          <p className={`${styles.heroSubtitle} hero-fade`} style={{ opacity: 0 }}>Where heritage meets the future. Fashion as identity, culture as currency.</p>
-          <div className={`${styles.heroCtas} hero-fade`} style={{ opacity: 0 }}>
-            <a href="#collections" className="btn-primary" onClick={(e) => { e.preventDefault(); site.scrollTo("#collections"); }}>Explore Collections</a>
-            <a href="#lookbook" className="btn-outline" onClick={(e) => { e.preventDefault(); site.scrollTo("#lookbook"); }}>View Lookbook</a>
+      {content.hero && (
+        <section id="hero" className={styles.hero}>
+          <div className={styles.heroImageWrap}>
+            <img
+              src={resolveImage("afresh-hero-dark", content.hero.background_url, 1920, 1080)}
+              alt={content.hero.title}
+              className={`${styles.heroImage} hero-bg`}
+            />
           </div>
-        </div>
-        <div className={`${styles.heroScroll} scroll-indicator`}>
-          <span>Scroll</span>
-          <ChevronDown size={16} style={{ color: "rgba(200,169,107,0.6)" }} />
-        </div>
-        <div className={styles.heroSide}>
-          <div className={styles.heroSideLine} />
-          <span>SS/25</span>
-          <div className={styles.heroSideLine} />
-        </div>
-      </section>
-
-      <Marquee items={MARQUEE_1} />
-
-      <section id="about" className={`${styles.section} ${styles.bgMatte} ${styles.aboutSection}`}>
-        <div className={styles.aboutGlow} />
-        <div className={styles.container}>
-          <div className={styles.aboutGrid}>
-            <div className={styles.aboutCol}>
-              <p className="reveal label">Our Manifesto</p>
-              <h2 className="reveal section-heading">WE DON&apos;T JUST<br />MAKE CLOTHES</h2>
-              <div className={`${styles.goldLine} reveal`} />
-            </div>
-            <div className={`${styles.aboutCol} ${styles.textStack}`}>
-              <p className={`${styles.editorialLead} reveal`}>Born from the pulse of African culture, forged in futuristic vision. Every thread tells a story. Every collection is a movement.</p>
-              <p className={`${styles.bodyText} reveal`}>We are not a brand — we are a belief. That fashion is armor. That style is language. That culture is currency. People buy identity, emotion, belonging — not just clothes. AFRESH exists at the intersection of heritage and tomorrow, creating garments that carry the weight of culture and the speed of the future.</p>
-              <p className={`${styles.bodyText} reveal`}>Our creative philosophy draws from the streets of Lagos, the energy of Accra, the innovation of Nairobi — filtered through a futuristic lens that speaks to the global youth. This is not a Nigerian clothing website. This is a global fashion movement born from Africa.</p>
-              <a href="#membership" className={`${styles.linkArrow} reveal`} onClick={(e) => { e.preventDefault(); site.scrollTo("#membership"); }}>
-                <span>Read Our Full Story</span>
-                <ArrowRight size={14} />
+          <div className={styles.heroOverlay1} />
+          <div className={styles.heroOverlay2} />
+          <div id="heroParticles" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
+          <div className={styles.heroContent} id="heroContent">
+            <p className={`${styles.heroTagline} hero-fade`} style={{ opacity: 0 }}>{content.hero.tagline}</p>
+            <h1 className={`${styles.heroTitle} hero-title`} style={{ opacity: 0 }}>{content.hero.title}</h1>
+            <p className={`${styles.heroSubtitle} hero-fade`} style={{ opacity: 0 }}>{content.hero.subtitle}</p>
+            <div className={`${styles.heroCtas} hero-fade`} style={{ opacity: 0 }}>
+              <a
+                href={content.hero.cta_primary_href}
+                className="btn-primary"
+                onClick={(e) => { e.preventDefault(); site.scrollTo(content.hero!.cta_primary_href); }}
+              >
+                {content.hero.cta_primary_label}
+              </a>
+              <a
+                href={content.hero.cta_secondary_href}
+                className="btn-outline"
+                onClick={(e) => { e.preventDefault(); site.scrollTo(content.hero!.cta_secondary_href); }}
+              >
+                {content.hero.cta_secondary_label}
               </a>
             </div>
           </div>
-          <div className={styles.statsGrid}>
-            {[{ t: 47, l: "Countries Reached" }, { t: 12, l: "Collections Dropped" }, { t: 25, l: "Global Collaborators" }].map((s) => (
-              <div key={s.l} className="reveal">
-                <p className={`${styles.statNumber} counter`} data-target={s.t}>0</p>
-                <p className={styles.statLabel}>{s.l}</p>
-              </div>
-            ))}
-            <div className="reveal">
-              <p className={styles.statNumber}>∞</p>
-              <p className={styles.statLabel}>Cultural Impact</p>
-            </div>
+          <div className={`${styles.heroScroll} scroll-indicator`}>
+            <span>{content.hero.scroll_label}</span>
+            <ChevronDown size={16} style={{ color: "rgba(200,169,107,0.6)" }} />
           </div>
-        </div>
-      </section>
+          <div className={styles.heroSide}>
+            <div className={styles.heroSideLine} />
+            <span>{content.hero.side_label}</span>
+            <div className={styles.heroSideLine} />
+          </div>
+        </section>
+      )}
 
+      {primaryMarquee && <Marquee items={primaryMarquee.items} />}
+
+      {content.about && (
+        <section id="about" className={`${styles.section} ${styles.bgMatte} ${styles.aboutSection}`}>
+          <div className={styles.aboutGlow} />
+          <div className={styles.container}>
+            <div className={styles.aboutGrid}>
+              <div className={styles.aboutCol}>
+                <p className="reveal label">{content.about.section_label}</p>
+                <h2 className="reveal section-heading">
+                  {content.about.heading_line_1}
+                  <br />
+                  {content.about.heading_line_2}
+                </h2>
+                <div className={`${styles.goldLine} reveal`} />
+              </div>
+              <div className={`${styles.aboutCol} ${styles.textStack}`}>
+                <p className={`${styles.editorialLead} reveal`}>{content.about.lead_paragraph}</p>
+                <p className={`${styles.bodyText} reveal`}>{content.about.body_paragraph_1}</p>
+                <p className={`${styles.bodyText} reveal`}>{content.about.body_paragraph_2}</p>
+                <a
+                  href={content.about.cta_href}
+                  className={`${styles.linkArrow} reveal`}
+                  onClick={(e) => { e.preventDefault(); site.scrollTo(content.about!.cta_href); }}
+                >
+                  <span>{content.about.cta_label}</span>
+                  <ArrowRight size={14} />
+                </a>
+              </div>
+            </div>
+            {content.aboutStats.length > 0 && (
+              <div className={styles.statsGrid}>
+                {content.aboutStats.map((s) => (
+                  <div key={s.id} className="reveal">
+                    {s.is_symbolic ? (
+                      <p className={styles.statNumber}>{s.symbol_text}</p>
+                    ) : (
+                      <p className={`${styles.statNumber} counter`} data-target={s.value_numeric ?? 0}>
+                        0
+                      </p>
+                    )}
+                    <p className={styles.statLabel}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {(content.collectionsSection || content.collections.length > 0) && (
       <section id="collections" className={`${styles.section} ${styles.bgGraphite}`}>
         <div className={styles.container}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <p className="reveal label">SS/25</p>
-              <h2 className="reveal section-heading">COLLECTIONS</h2>
+          {content.collectionsSection && (
+            <div className={styles.sectionHeader}>
+              <div>
+                <p className="reveal label">{content.collectionsSection.section_label}</p>
+                <h2 className="reveal section-heading">{content.collectionsSection.heading}</h2>
+              </div>
+              {content.collectionsSection.view_all_label && (
+                <a
+                  href={content.collectionsSection.view_all_href || "#shop"}
+                  className={`${styles.linkArrow} reveal`}
+                  onClick={(e) => { e.preventDefault(); site.scrollTo(content.collectionsSection!.view_all_href || "#shop"); }}
+                >
+                  <span>{content.collectionsSection.view_all_label}</span>
+                  <ArrowRight size={14} />
+                </a>
+              )}
             </div>
-            <a href="#shop" className={`${styles.linkArrow} reveal`} onClick={(e) => { e.preventDefault(); site.scrollTo("#shop"); }}>
-              <span>View All</span>
-              <ArrowRight size={14} />
-            </a>
-          </div>
+          )}
           <div className={styles.collectionsGrid}>
             {content.collections.map((c) => (
               <div key={c.id} className={`img-zoom reveal-scale ${styles.collectionCard}`}>
-                <img src={imgOr(c.slug || c.id, c.image_url, 600, 800)} alt={c.title} />
+                <img src={resolveImage(c.slug || c.id, c.image_url, 600, 800)} alt={c.title} />
                 <div className={styles.collectionOverlay} />
                 <div className={styles.collectionContent}>
                   <p className={styles.collectionChapter}>{c.chapter}</p>
@@ -254,29 +301,39 @@ export default function AfreshPage() {
           </div>
         </div>
       </section>
+      )}
 
+      {(content.lookbookSection || content.lookbook.length > 0) && (
       <section id="lookbook" className={`${styles.sectionSm} ${styles.bgMatte}`} style={{ overflow: "hidden" }}>
-        <div className={styles.lookbookHeader}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <p className="reveal label">Editorial</p>
-              <h2 className="reveal section-heading">LOOKBOOK</h2>
+        {content.lookbookSection && (
+          <div className={styles.lookbookHeader}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <p className="reveal label">{content.lookbookSection.section_label}</p>
+                <h2 className="reveal section-heading">{content.lookbookSection.heading}</h2>
+              </div>
+              {content.lookbookSection.description && (
+                <p className={`${styles.bodyText} reveal`} style={{ maxWidth: "24rem" }}>
+                  {content.lookbookSection.description}
+                </p>
+              )}
             </div>
-            <p className={`${styles.bodyText} reveal`} style={{ maxWidth: "24rem" }}>Each frame is a chapter. Each outfit, a narrative. Scroll through our visual story — campaign by campaign.</p>
           </div>
-        </div>
+        )}
         <div className={`lookbook-scroll ${styles.lookbookTrack}`} id="lookbookScroll">
           {content.lookbook.map((l) => (
             <div key={l.id} className={styles.lookItem}>
               <div className={styles.lookImageWrap}>
-                <img src={imgOr(l.id, l.image_url, 360, 480)} alt={l.label} />
+                <img src={resolveImage(l.id, l.image_url, 360, 480)} alt={l.label} />
                 <span className={styles.lookLabel}>{l.label}</span>
               </div>
             </div>
           ))}
         </div>
       </section>
+      )}
 
+      {(cinematic || videos.length > 0) && (
       <section className={styles.cinematic}>
         {filmOpen && videos[videoIndex] ? (
           <video
@@ -290,20 +347,18 @@ export default function AfreshPage() {
           />
         ) : (
           <img
-            src={imgOr("afresh-cinematic", cinematic?.image_url ?? videos[0]?.poster_url, 1920, 900)}
+            src={resolveImage("afresh-cinematic", cinematic?.image_url ?? videos[0]?.poster_url, 1920, 900)}
             alt="Cinematic Break"
           />
         )}
+        {cinematic && (
         <div className={styles.cinematicOverlay}>
           <div>
-            <p className={`${styles.cinematicQuote} reveal`}>
-              &quot;{cinematic?.quote || "Fashion is not about clothes. It's about a vision of life."}&quot;
-            </p>
-            <p className={`${styles.cinematicAttrib} reveal`}>
-              {cinematic?.attribution || "— The AFRESH Philosophy"}
-            </p>
+            <p className={`${styles.cinematicQuote} reveal`}>&quot;{cinematic.quote}&quot;</p>
+            <p className={`${styles.cinematicAttrib} reveal`}>{cinematic.attribution}</p>
           </div>
         </div>
+        )}
         <button type="button" className={`play-btn ${styles.playBtn}`} onClick={playFilm} aria-label="Play film">
           <Play size={24} style={{ marginLeft: 4 }} />
         </button>
@@ -313,26 +368,32 @@ export default function AfreshPage() {
           </button>
         )}
       </section>
+      )}
 
+      {(content.shopSection || content.products.length > 0) && (
       <section id="shop" className={`${styles.section} ${styles.bgMatte}`}>
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
-            <div>
-              <p className="reveal label">Curated</p>
-              <h2 className="reveal section-heading">THE SHOP</h2>
-            </div>
-            <div className={`${styles.shopFilters} reveal`}>
-              {["all", "tops", "bottoms", "outerwear", "accessories"].map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  className={`shop-filter shop-filter-btn ${site.activeFilter === f ? "active" : ""} ${styles.shopFilter}`}
-                  onClick={() => site.setActiveFilter(f)}
-                >
-                  {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              ))}
-            </div>
+            {content.shopSection && (
+              <div>
+                <p className="reveal label">{content.shopSection.section_label}</p>
+                <h2 className="reveal section-heading">{content.shopSection.heading}</h2>
+              </div>
+            )}
+            {shopFilters.length > 1 && (
+              <div className={`${styles.shopFilters} reveal`}>
+                {shopFilters.map((f) => (
+                  <button
+                    key={f.slug}
+                    type="button"
+                    className={`shop-filter shop-filter-btn ${site.activeFilter === f.slug ? "active" : ""} ${styles.shopFilter}`}
+                    onClick={() => site.setActiveFilter(f.slug)}
+                  >
+                    {f.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className={styles.productsGrid} id="shopGrid">
             {content.products.map((p) => {
@@ -340,7 +401,7 @@ export default function AfreshPage() {
               return (
                 <div key={p.id} className="product-card reveal" data-category={p.category_slug}>
                   <div className={styles.productImageWrap}>
-                    <img src={imgOr(p.slug, p.image_url, 400, 530)} alt={p.name} className="product-img" />
+                    <img src={resolveImage(p.slug, p.image_url, 400, 530)} alt={p.name} className="product-img" />
                     <div className={`product-overlay ${styles.productOverlay}`}>
                       <button type="button" className={styles.addToBagBtn} onClick={() => site.addToCart(p.name)}>
                         Add to Bag
@@ -351,7 +412,7 @@ export default function AfreshPage() {
                   </div>
                   <div className={styles.productInfo}>
                     <h4>{p.name}</h4>
-                    <p>{formatNaira(p.price_amount)}</p>
+                    <p>{formatNaira(p.price_amount, currency)}</p>
                     <div className={styles.colorSwatches}>
                       {p.swatches.map((color) => (
                         <span
@@ -369,26 +430,39 @@ export default function AfreshPage() {
               );
             })}
           </div>
-          <div className={`${styles.centerCta} reveal`}>
-            <a href="#" className={styles.btnOutlineLarge}>
-              <span>View All Products</span>
-              <ArrowRight size={14} />
-            </a>
-          </div>
+          {content.shopSection?.view_all_label && (
+            <div className={`${styles.centerCta} reveal`}>
+              <a
+                href={content.shopSection.view_all_href || "#"}
+                className={styles.btnOutlineLarge}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (content.shopSection?.view_all_href?.startsWith("#")) {
+                    site.scrollTo(content.shopSection.view_all_href);
+                  }
+                }}
+              >
+                <span>{content.shopSection.view_all_label}</span>
+                <ArrowRight size={14} />
+              </a>
+            </div>
+          )}
         </div>
       </section>
+      )}
 
-      <Marquee items={MARQUEE_2} reverse />
+      {secondaryMarquee && <Marquee items={secondaryMarquee.items} reverse />}
 
+      {content.drop && (
       <section id="drops" className={`${styles.section} ${styles.bgGraphite} ${styles.drops}`}>
         <div className={styles.dropsBg}>
-          <img src="https://picsum.photos/seed/afresh-drop-bg/1920/1080" alt="" />
+          <img src={resolveImage("afresh-drop-bg", content.drop.background_url, 1920, 1080)} alt="" />
         </div>
         <div className={styles.dropsContent}>
           <div className={styles.dropsHeader}>
-            <p className="reveal label">Limited Edition</p>
-            <h2 className={`reveal ${styles.dropsTitle}`}>NEXT DROP</h2>
-            <p className={`${styles.dropsSubtitle} reveal`}>The &quot;Ancestral Code&quot; Capsule — 50 Pieces Worldwide</p>
+            <p className="reveal label">{content.drop.section_label}</p>
+            <h2 className={`reveal ${styles.dropsTitle}`}>{content.drop.heading}</h2>
+            <p className={`${styles.dropsSubtitle} reveal`}>{content.drop.subtitle}</p>
           </div>
           <div className={`${styles.countdown} reveal`}>
             {(["days", "hours", "minutes", "seconds"] as const).map((unit) => (
@@ -399,22 +473,34 @@ export default function AfreshPage() {
             ))}
           </div>
           <div className={`${styles.dropsCtas} reveal`}>
-            <button type="button" className="btn-primary" onClick={() => site.showToast("Early access registered — check your email")}>Get Early Access</button>
-            <button type="button" className="btn-outline" onClick={() => site.showToast("VIP membership required for private collections")}>Unlock Private Collection</button>
+            <button type="button" className="btn-primary" onClick={() => site.showToast(content.drop!.cta_primary_label)}>
+              {content.drop.cta_primary_label}
+            </button>
+            <button type="button" className="btn-outline" onClick={() => site.showToast(content.drop!.cta_secondary_label)}>
+              {content.drop.cta_secondary_label}
+            </button>
           </div>
-          <p className={`${styles.dropsNote} reveal`}>Invite-only • VIP members get 24hr early access</p>
+          <p className={`${styles.dropsNote} reveal`}>{content.drop.footnote}</p>
         </div>
       </section>
+      )}
 
+      {(content.communitySection || content.community.length > 0) && (
       <section id="community" className={`${styles.section} ${styles.bgMatte}`}>
         <div className={styles.container}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <p className="reveal label">The Movement</p>
-              <h2 className="reveal section-heading">COMMUNITY</h2>
+          {content.communitySection && (
+            <div className={styles.sectionHeader}>
+              <div>
+                <p className="reveal label">{content.communitySection.section_label}</p>
+                <h2 className="reveal section-heading">{content.communitySection.heading}</h2>
+              </div>
+              {content.communitySection.description && (
+                <p className={`${styles.bodyText} reveal`} style={{ maxWidth: "28rem" }}>
+                  {content.communitySection.description}
+                </p>
+              )}
             </div>
-            <p className={`${styles.bodyText} reveal`} style={{ maxWidth: "28rem" }}>This is what separates brands from clothing companies. Our community wears the culture. Tag <span style={{ color: "#C8A96B" }}>@afresh</span> to be featured.</p>
-          </div>
+          )}
           <div className={styles.communityGrid}>
             {content.community.map((c) => (
               <div
@@ -422,7 +508,7 @@ export default function AfreshPage() {
                 className={`reveal-scale ${styles.communityItem} ${c.is_large_tile ? styles.communityFeatured : ""}`}
               >
                 <img
-                  src={imgOr(c.id, c.image_url, c.is_large_tile ? 800 : 400, c.is_large_tile ? 800 : 400)}
+                  src={resolveImage(c.id, c.image_url, c.is_large_tile ? 800 : 400, c.is_large_tile ? 800 : 400)}
                   alt="Community"
                 />
                 <div className={styles.communityHandle}>
@@ -432,13 +518,13 @@ export default function AfreshPage() {
               </div>
             ))}
           </div>
+          {content.collaborators.length > 0 && (
           <div className={styles.collaborators}>
-            <p className={`${styles.collabLabel} reveal`}>Collaborators & Ambassadors</p>
             <div className={`${styles.collabGrid} reveal`}>
               {content.collaborators.map((c) => (
                 <div key={c.id} className={`${styles.collabItem} ${c.is_wide_tile ? styles.collabSpan2 : ""}`}>
                   <div className={styles.collabAvatar}>
-                    <img src={imgOr(c.id, c.avatar_url, 100, 100)} alt={c.name} />
+                    <img src={resolveImage(c.id, c.avatar_url, 100, 100)} alt={c.name} />
                   </div>
                   <p>{c.name}</p>
                   <p>{c.role}</p>
@@ -446,26 +532,33 @@ export default function AfreshPage() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </section>
+      )}
 
+      {(content.editorialSection || content.editorial.length > 0) && (
       <section id="editorial" className={`${styles.section} ${styles.bgGraphite}`}>
         <div className={styles.container}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <p className="reveal label">Fashion Media</p>
-              <h2 className="reveal section-heading">EDITORIAL</h2>
+          {content.editorialSection && (
+            <div className={styles.sectionHeader}>
+              <div>
+                <p className="reveal label">{content.editorialSection.section_label}</p>
+                <h2 className="reveal section-heading">{content.editorialSection.heading}</h2>
+              </div>
+              {content.editorialSection.read_all_label && (
+                <a href={content.editorialSection.read_all_href || "#"} className={`${styles.linkArrow} reveal`}>
+                  <span>{content.editorialSection.read_all_label}</span>
+                  <ArrowRight size={14} />
+                </a>
+              )}
             </div>
-            <a href="#" className={`${styles.linkArrow} reveal`}>
-              <span>Read All</span>
-              <ArrowRight size={14} />
-            </a>
-          </div>
+          )}
           <div className={styles.editorialGrid}>
             {featuredEditorial[0] && (
               <div className={`reveal ${styles.editorialFeatured}`}>
                 <div className={`${styles.articleCard} ${styles.articleFeaturedWrap}`}>
-                  <img src={imgOr(featuredEditorial[0].id, featuredEditorial[0].image_url, 800, 500)} alt="Editorial" />
+                  <img src={resolveImage(featuredEditorial[0].id, featuredEditorial[0].image_url, 800, 500)} alt="Editorial" />
                   <div className={styles.articleOverlay} />
                   <div className={styles.articleContent}>
                     <div className={styles.articleTags}>
@@ -485,7 +578,7 @@ export default function AfreshPage() {
             {cardEditorial.map((a) => (
               <div key={a.id} className="reveal">
                 <div className={`${styles.articleCard} ${styles.articleSmallWrap}`}>
-                  <img src={imgOr(a.id, a.image_url, 400, 300)} alt="Editorial" />
+                  <img src={resolveImage(a.id, a.image_url, 400, 300)} alt="Editorial" />
                   <div className={styles.articleOverlay} />
                   <div className={styles.articleContent}>
                     <span className={styles.articleTag}>{a.tag}</span>
@@ -498,7 +591,7 @@ export default function AfreshPage() {
           <div className={styles.moreArticles}>
             {miniEditorial.map((a) => (
               <div key={a.id} className={`${styles.miniArticle} reveal`}>
-                <img src={imgOr(a.id, a.image_url, 100, 100)} alt="" />
+                <img src={resolveImage(a.id, a.image_url, 100, 100)} alt="" />
                 <div>
                   <span className={styles.articleTag}>{a.tag}</span>
                   <h4>{a.title}</h4>
@@ -509,53 +602,70 @@ export default function AfreshPage() {
           </div>
         </div>
       </section>
+      )}
 
+      {content.membership && (
       <section id="membership" className={`${styles.section} ${styles.bgMatte} ${styles.membership}`}>
         <div className={styles.membershipBg}>
-          <img src="https://picsum.photos/seed/afresh-member/1920/1080" alt="" />
+          <img src={resolveImage("afresh-member", content.membership.background_url, 1920, 1080)} alt="" />
         </div>
         <div className={styles.membershipGradient} />
         <div className={styles.membershipInner}>
-          <p className="reveal label">Exclusive Access</p>
+          <p className="reveal label">{content.membership.section_label}</p>
           <h2 className="reveal section-heading">
-            <span>JOIN THE</span><br />
-            <span className="gold-text">INNER CIRCLE</span>
+            <span>{content.membership.heading_line_1}</span>
+            <br />
+            <span className={content.membership.heading_line_2_gold ? "gold-text" : ""}>
+              {content.membership.heading_line_2}
+            </span>
           </h2>
-          <p className={`${styles.editorialLead} reveal`} style={{ marginTop: "1.5rem" }}>Membership has its privileges. Early access, private collections, VIP events, and a seat at the table of culture.</p>
-          <div className={`${styles.perksGrid} reveal`}>
-            {[
-              { icon: Clock, title: "24hr Early Access", desc: "Shop drops before anyone else" },
-              { icon: Lock, title: "Private Collections", desc: "Invite-only pieces" },
-              { icon: Sparkles, title: "VIP Events", desc: "Fashion shows & private views" },
-              { icon: Gift, title: "Exclusive Gifts", desc: "Member-only accessories" },
-            ].map((perk) => (
-              <div key={perk.title} className={styles.perkCard}>
-                <perk.icon size={18} />
-                <h4>{perk.title}</h4>
-                <p>{perk.desc}</p>
-              </div>
-            ))}
-          </div>
+          <p className={`${styles.editorialLead} reveal`} style={{ marginTop: "1.5rem" }}>
+            {content.membership.description}
+          </p>
+          {content.membershipPerks.length > 0 && (
+            <div className={`${styles.perksGrid} reveal`}>
+              {content.membershipPerks.map((perk) => {
+                const Icon = PERK_ICONS[perk.icon_key] ?? Sparkles;
+                return (
+                  <div key={perk.title} className={styles.perkCard}>
+                    <Icon size={18} />
+                    <h4>{perk.title}</h4>
+                    <p>{perk.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <div className={`${styles.signupRow} reveal`}>
-            <input type="email" placeholder="Your email address" id="memberEmail" value={site.memberEmail} onChange={(e) => site.setMemberEmail(e.target.value)} />
-            <button type="button" className="btn-primary" onClick={site.joinVIP}>Join VIP</button>
+            <input
+              type="email"
+              placeholder={content.membership.signup_placeholder}
+              id="memberEmail"
+              value={site.memberEmail}
+              onChange={(e) => site.setMemberEmail(e.target.value)}
+            />
+            <button type="button" className="btn-primary" onClick={site.joinVIP}>
+              {content.membership.signup_button_label}
+            </button>
           </div>
-          <p className={`${styles.signupNote} reveal`}>Free to join • No spam • Unsubscribe anytime</p>
+          <p className={`${styles.signupNote} reveal`}>{content.membership.footnote}</p>
         </div>
       </section>
+      )}
 
+      {content.contact && (
       <section id="contact" className={`${styles.section} ${styles.bgGraphite}`}>
         <div className={styles.container}>
           <div className={styles.contactGrid}>
             <div>
-              <p className="reveal label">Get In Touch</p>
-              <h2 className="reveal section-heading">CONTACT</h2>
+              <p className="reveal label">{content.contact.section_label}</p>
+              <h2 className="reveal section-heading">{content.contact.heading}</h2>
               <div className={`${styles.goldLine} reveal`} />
-              <p className={`${styles.bodyText} reveal`} style={{ margin: "2rem 0" }}>For press, collaborations, wholesale inquiries, or just to connect with the movement.</p>
+              <p className={`${styles.bodyText} reveal`} style={{ margin: "2rem 0" }}>{content.contact.intro_text}</p>
               <div className={`${styles.contactInfo} reveal`}>
-                <div><Mail size={16} /><span>hello@afreshfashion.com</span></div>
-                <div><MapPin size={16} /><span>Lagos, Nigeria</span></div>
-                <div><Globe size={16} /><span>Global Shipping Available</span></div>
+                <div><Mail size={16} /><span>{content.contact.email}</span></div>
+                <div><MapPin size={16} /><span>{content.contact.location}</span></div>
+                <div><Globe size={16} /><span>{content.contact.shipping_note}</span></div>
               </div>
             </div>
             <form className={styles.contactForm} id="contactForm" onSubmit={site.submitContact}>
@@ -587,7 +697,9 @@ export default function AfreshPage() {
           </div>
         </div>
       </section>
+      )}
 
+      {content.footer && (
       <footer className={styles.footer}>
         <div className={styles.container}>
           <div className={styles.footerGrid}>
@@ -595,23 +707,25 @@ export default function AfreshPage() {
               <a href="#hero" className={styles.logoLink} onClick={(e) => { e.preventDefault(); site.scrollTo("#hero"); }}>
                 <Logo size="lg" />
               </a>
-              <p>A global fashion movement born from Africa. Fashion is armor. Style is language. Culture is currency.</p>
-              <div className={styles.socialLinks}>
-                <a href="#" aria-label="Instagram"><Instagram size={18} /></a>
-                <a href="#" aria-label="Twitter"><Twitter size={18} /></a>
-                <a href="#" aria-label="Youtube"><Youtube size={18} /></a>
-                <a href="#" aria-label="Music"><Music size={18} /></a>
-              </div>
+              <p>{content.footer.tagline}</p>
+              {content.footer.social.length > 0 && (
+                <div className={styles.socialLinks}>
+                  {content.footer.social.map((s) => {
+                    const Icon = SOCIAL_ICONS[s.icon_key] ?? SOCIAL_ICONS[s.platform] ?? Globe;
+                    return (
+                      <a key={s.platform} href={s.url} aria-label={s.platform} target="_blank" rel="noopener noreferrer">
+                        <Icon size={18} />
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            {[
-              { title: "Shop", links: ["New Arrivals", "Collections", "Lookbook", "Accessories", "Gift Cards"] },
-              { title: "About", links: ["Our Story", "Manifesto", "Collaborations", "Careers", "Press"] },
-              { title: "Help", links: ["Shipping & Returns", "Size Guide", "Contact Us", "FAQ", "Privacy Policy"] },
-            ].map((col) => (
+            {content.footer.link_groups.map((col) => (
               <div key={col.title} className={styles.footerCol}>
                 <h5>{col.title}</h5>
                 {col.links.map((l) => (
-                  <a key={l} href="#">{l}</a>
+                  <a key={l.label} href={l.href}>{l.label}</a>
                 ))}
               </div>
             ))}
@@ -619,13 +733,14 @@ export default function AfreshPage() {
           <div className="section-divider" style={{ marginBottom: "2rem" }} />
           <div className={styles.footerBottom}>
             <p>
-              © 2025 AFRESH. All rights reserved.
-              <Link href="/admin" className={styles.footerStealth}> · ref. ss25/afr</Link>
+              {content.footer.copyright_text}
+              <Link href="/admin" className={styles.footerStealth}>{content.footer.stealth_ref}</Link>
             </p>
-            <p>Lagos • Accra • Nairobi • London • NYC</p>
+            <p>{content.footer.cities_line}</p>
           </div>
         </div>
       </footer>
+      )}
 
     </>
   );

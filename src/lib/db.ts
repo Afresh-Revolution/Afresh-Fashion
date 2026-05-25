@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, type QueryResultRow } from "pg";
 
 const globalForPg = globalThis as typeof globalThis & { pgPool?: Pool };
 
@@ -16,7 +16,7 @@ export function getPool() {
   return globalForPg.pgPool;
 }
 
-export async function query<T extends Record<string, unknown> = Record<string, unknown>>(
+export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: unknown[]
 ) {

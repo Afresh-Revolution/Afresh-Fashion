@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-export function useAfreshSite() {
+export function useAfreshSite(dropAt?: string | null) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
@@ -297,10 +297,12 @@ export function useAfreshSite() {
     };
   }, []);
 
-  // Countdown
+  // Countdown (from active drop in database)
   useEffect(() => {
-    if (!dropDateRef.current) {
-      dropDateRef.current = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    dropDateRef.current = dropAt ? new Date(dropAt) : null;
+    if (!dropDateRef.current || Number.isNaN(dropDateRef.current.getTime())) {
+      setCountdown({ days: "--", hours: "--", minutes: "--", seconds: "--" });
+      return;
     }
     const tick = () => {
       const diff = (dropDateRef.current?.getTime() || 0) - Date.now();
@@ -322,7 +324,7 @@ export function useAfreshSite() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [dropAt]);
 
   // Shop filter animation
   useEffect(() => {
