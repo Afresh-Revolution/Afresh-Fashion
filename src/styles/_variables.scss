@@ -1,0 +1,20 @@
+// Colors
+$matte: #0a0a0a;
+$graphite: #1e1e1e;
+$silver: #bfc0c0;
+$gold: #c8a96b;
+$offwhite: #f5f5f5;
+
+// Fonts (fallbacks; Next.js font variables applied in globals)
+$font-heading: "Bebas Neue", sans-serif;
+$font-editorial: "Cormorant Garamond", serif;
+$font-body: "Inter", sans-serif;
+
+// Layout
+$container-max: 1400px;
+$nav-height: 5rem;
+
+// Breakpoints
+$bp-md: 768px;
+$bp-lg: 1024px;
+$bp-xl: 1280px;

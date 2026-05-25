@@ -1,0 +1,614 @@
+@use "variables" as *;
+@use "mixins" as *;
+
+.admin {
+  min-height: 100vh;
+  background: $matte;
+  color: $offwhite;
+  display: flex;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid $graphite;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba($matte, 0.98);
+
+  @media (max-width: $bp-lg) {
+    display: none;
+  }
+}
+
+.sidebarLogo {
+  margin-bottom: 2.5rem;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.navItem {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $silver;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.2s, background 0.2s;
+
+  &:hover {
+    color: $offwhite;
+    background: rgba($graphite, 0.5);
+  }
+
+}
+
+.navItemActive {
+  color: $gold;
+  background: rgba($gold, 0.08);
+}
+
+.logoutBtn {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.5);
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.5rem 0;
+  margin-top: auto;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.backLink {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.4);
+  margin-top: 0.75rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $silver;
+  }
+}
+
+.main {
+  flex: 1;
+  margin-left: 240px;
+  padding: 2rem 2.5rem 4rem;
+
+  @media (max-width: $bp-lg) {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+}
+
+.mobileHeader {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid $graphite;
+
+  @media (max-width: $bp-lg) {
+    display: flex;
+  }
+}
+
+.mobileTabs {
+  display: none;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+
+  @media (max-width: $bp-lg) {
+    display: flex;
+  }
+}
+
+.pageTitle {
+  font-family: $font-heading;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.pageDesc {
+  font-size: 0.875rem;
+  color: $silver;
+  font-weight: 300;
+  margin-bottom: 2.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.statCard {
+  background: $graphite;
+  border: 1px solid rgba($gold, 0.1);
+  padding: 1.5rem;
+
+  p:first-child {
+    font-family: $font-heading;
+    font-size: 2rem;
+    color: $gold;
+  }
+
+  p:last-child {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: $silver;
+    margin-top: 0.5rem;
+  }
+}
+
+.panel {
+  background: $graphite;
+  border: 1px solid rgba($gold, 0.08);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.panelTitle {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: $gold;
+  margin-bottom: 1.25rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+
+  th {
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: $silver;
+    font-weight: 400;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba($silver, 0.15);
+  }
+
+  td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba($silver, 0.08);
+    color: $offwhite;
+    font-weight: 300;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.badge {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+
+}
+
+.badgePublished {
+  color: $gold;
+  border: 1px solid rgba($gold, 0.3);
+}
+
+.badgeDraft {
+  color: $silver;
+  border: 1px solid rgba($silver, 0.3);
+}
+
+.formGrid {
+  display: grid;
+  gap: 1.25rem;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.field {
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: $silver;
+    margin-bottom: 0.5rem;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    background: $matte;
+    border: 1px solid rgba($silver, 0.2);
+    color: $offwhite;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: $gold;
+    }
+  }
+
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+}
+
+.fieldFull {
+  @media (min-width: $bp-md) {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: $silver;
+    margin-bottom: 0.5rem;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    background: $matte;
+    border: 1px solid rgba($silver, 0.2);
+    color: $offwhite;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: $gold;
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.btnPrimary {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: $gold;
+  color: $matte;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+
+  &:hover {
+    background: $offwhite;
+  }
+}
+
+.btnGhost {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  color: $silver;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba($silver, 0.3);
+  cursor: pointer;
+
+  &:hover {
+    color: $offwhite;
+    border-color: $silver;
+  }
+}
+
+.btnSmall {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  color: $silver;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.empty {
+  font-size: 0.875rem;
+  color: rgba($silver, 0.5);
+  font-weight: 300;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: rgba($gold, 0.95);
+  color: $matte;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  z-index: 100;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s, transform 0.3s;
+
+  &.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contentPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.contentCard {
+  background: rgba($graphite, 0.6);
+  border: 1px solid rgba($silver, 0.12);
+  padding: 1.25rem;
+}
+
+.itemActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba($silver, 0.1);
+}
+
+.statusSelect {
+  width: 100%;
+  background: $matte;
+  border: 1px solid rgba($silver, 0.2);
+  color: $offwhite;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: $silver;
+  cursor: pointer;
+
+  input {
+    accent-color: $gold;
+  }
+}
+
+.mediaUpload {
+  margin-top: 1rem;
+
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $silver;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.mediaPreview {
+  margin-bottom: 0.75rem;
+  max-width: 280px;
+
+  img,
+  video {
+    width: 100%;
+    display: block;
+    border: 1px solid rgba($silver, 0.15);
+  }
+
+  video {
+    max-height: 160px;
+  }
+}
+
+.uploadError {
+  font-size: 0.75rem;
+  color: #e57373;
+  margin-top: 0.5rem;
+}
+
+.videoTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.panelHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panelHint {
+  font-size: 0.8125rem;
+  color: rgba($silver, 0.65);
+  margin: 0 0 1.25rem;
+  font-weight: 300;
+}
+
+.navBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  font-size: 10px;
+  background: $gold;
+  color: $matte;
+  border-radius: 9px;
+  vertical-align: middle;
+}
+
+.notifBadge {
+  display: inline-flex;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 10px;
+  background: $gold;
+  color: $matte;
+}
+
+.vipPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.notifList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba($silver, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    strong {
+      font-size: 0.8125rem;
+      color: $offwhite;
+      letter-spacing: 0.05em;
+    }
+
+    span {
+      font-size: 0.8125rem;
+      color: rgba($silver, 0.8);
+      font-weight: 300;
+    }
+
+    time {
+      font-size: 0.6875rem;
+      color: rgba($silver, 0.45);
+    }
+  }
+}
+
+.notifUnread strong {
+  color: $gold;
+}
+
+.emailPreview {
+  width: 100%;
+  min-height: 420px;
+  margin-top: 1rem;
+  border: 1px solid rgba($silver, 0.2);
+  background: #fff;
+}
+
+.field textarea {
+  width: 100%;
+  background: $matte;
+  border: 1px solid rgba($silver, 0.2);
+  color: $offwhite;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: $gold;
+  }
+}
+
+.toggle {
+  width: 36px;
+  height: 20px;
+  background: $matte;
+  border: 1px solid rgba($silver, 0.3);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: $silver;
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  &.on {
+    border-color: $gold;
+
+    &::after {
+      transform: translateX(16px);
+      background: $gold;
+    }
+  }
+}

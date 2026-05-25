@@ -1,0 +1,178 @@
+@use "variables" as *;
+
+.authPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $matte;
+  padding: 2rem 1.5rem;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid $graphite;
+  background: rgba($graphite, 0.4);
+  padding: 2.5rem 2rem;
+}
+
+.authLogo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.authLabel {
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: $gold;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.authTitle {
+  font-family: $font-heading;
+  font-size: 2rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: $offwhite;
+  margin-bottom: 0.75rem;
+}
+
+.authDesc {
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: $silver;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+}
+
+.autofillTrap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.field {
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: $silver;
+    margin-bottom: 0.5rem;
+    font-weight: 300;
+  }
+
+  input {
+    width: 100%;
+    background: $matte;
+    border: 1px solid rgba($silver, 0.25);
+    color: $offwhite;
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    font-family: inherit;
+
+    &::placeholder {
+      color: rgba($silver, 0.4);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $gold;
+    }
+  }
+}
+
+.submitBtn {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: $gold;
+  color: $matte;
+  border: none;
+  padding: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 0.5rem;
+
+  &:hover:not(:disabled) {
+    background: $offwhite;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.authLinks {
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
+.textLink {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: $silver;
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.error {
+  font-size: 0.8125rem;
+  color: #e8a0a0;
+  text-align: center;
+}
+
+.success {
+  font-size: 0.8125rem;
+  color: $gold;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.devNote {
+  font-size: 0.75rem;
+  color: rgba($silver, 0.7);
+  line-height: 1.5;
+  word-break: break-all;
+
+  a {
+    color: $gold;
+  }
+}
+
+.backSite {
+  display: block;
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.4);
+  text-decoration: none;
+
+  &:hover {
+    color: $silver;
+  }
+}

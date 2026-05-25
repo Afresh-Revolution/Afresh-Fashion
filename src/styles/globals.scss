@@ -1,0 +1,417 @@
+@use "variables" as *;
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+::selection {
+  background: $gold;
+  color: $matte;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), $font-body;
+  background: $matte;
+  color: $offwhite;
+  overflow-x: hidden;
+}
+
+.font-heading,
+.section-heading {
+  font-family: var(--font-heading), $font-heading;
+}
+
+.font-editorial {
+  font-family: var(--font-editorial), $font-editorial;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+// Preloader
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: $matte;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.preloader-wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.preloader-brand {
+  display: flex;
+  font-family: var(--font-heading), $font-heading;
+  font-size: clamp(3rem, 10vw, 8rem);
+  line-height: 0.9;
+  letter-spacing: 0.3em;
+  color: $gold;
+  overflow: hidden;
+
+  span {
+    display: inline-block;
+    transform: translateY(110%);
+  }
+}
+
+.preloader-fashion {
+  display: block;
+  font-family: var(--font-editorial), $font-editorial;
+  font-size: clamp(0.875rem, 2.8vw, 1.5rem);
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0.42em;
+  text-transform: lowercase;
+  color: $silver;
+  padding-left: 0.42em;
+  transform: translateY(120%);
+  opacity: 0;
+}
+
+.preloader-line {
+  width: 0;
+  height: 1px;
+  background: $gold;
+  margin-top: 1rem;
+}
+
+// Custom cursor
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: $gold;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9998;
+  border-radius: 50%;
+}
+
+.cursor-ring {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba($gold, 0.4);
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9997;
+  border-radius: 50%;
+  transition: width 0.3s, height 0.3s, border-color 0.3s;
+
+  &.hovering {
+    width: 60px;
+    height: 60px;
+    border-color: $gold;
+  }
+}
+
+@media (max-width: $bp-md) {
+  .cursor-dot,
+  .cursor-ring {
+    display: none;
+  }
+}
+
+// Animations
+@keyframes kenBurns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes playPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba($gold, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 20px rgba($gold, 0);
+  }
+}
+
+.hero-bg {
+  animation: kenBurns 20s ease-in-out infinite alternate;
+}
+
+.marquee-track {
+  animation: marquee 30s linear infinite;
+  display: flex;
+  white-space: nowrap;
+
+  &:hover {
+    animation-play-state: paused;
+  }
+
+  &--reverse {
+    animation-direction: reverse;
+  }
+}
+
+.scroll-indicator {
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+// Image zoom
+.img-zoom {
+  overflow: hidden;
+
+  img {
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  &:hover img {
+    transform: scale(1.08);
+  }
+}
+
+// Product card
+.product-card {
+  .product-overlay {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  &:hover .product-overlay {
+    opacity: 1;
+  }
+
+  &:hover .product-img {
+    transform: scale(1.05);
+  }
+}
+
+.product-img {
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+// Lookbook scroll
+.lookbook-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// Nav
+.nav-solid {
+  background: rgba($matte, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba($gold, 0.1);
+}
+
+// Reveal animation base
+.reveal {
+  opacity: 0;
+  transform: translateY(60px);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(60px);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+// Mobile menu
+.mobile-menu {
+  clip-path: circle(0% at calc(100% - 40px) 40px);
+  transition: clip-path 0.8s cubic-bezier(0.77, 0, 0.18, 1);
+
+  &.open {
+    clip-path: circle(150% at calc(100% - 40px) 40px);
+  }
+}
+
+// Gold gradient text
+.gold-text {
+  background: linear-gradient(135deg, $gold, #e8d5a3, $gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Countdown box
+.countdown-box {
+  background: rgba($gold, 0.05);
+  border: 1px solid rgba($gold, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+// Community grid item
+.community-item {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba($matte, 0.8) 0%, transparent 60%);
+  }
+}
+
+// Particles
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba($gold, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+// Section divider
+.section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba($gold, 0.3), transparent);
+}
+
+// Toast
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba($gold, 0.95);
+  color: $matte;
+  padding: 1rem 2rem;
+  font-family: $font-body;
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  z-index: 9999;
+  border-radius: 2px;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &.show {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.play-btn {
+  animation: playPulse 2s infinite;
+}
+
+// Utility classes (used across components)
+.label {
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: $gold;
+  margin-bottom: 1.5rem;
+}
+
+.section-heading {
+  font-family: $font-heading;
+  font-size: clamp(3rem, 6vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  color: $offwhite;
+}
+
+.btn-primary {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: $gold;
+  color: $matte;
+  padding: 0.875rem 2rem;
+  font-weight: 500;
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+
+  &:hover {
+    background: $offwhite;
+  }
+}
+
+.btn-outline {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 1px solid rgba($offwhite, 0.3);
+  color: $offwhite;
+  padding: 0.875rem 2rem;
+  font-weight: 300;
+  display: inline-block;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.3s, color 0.3s;
+
+  &:hover {
+    border-color: $gold;
+    color: $gold;
+  }
+}
+
+// Shop filter active state
+.shop-filter.active {
+  color: $gold;
+  font-weight: 500;
+  border-bottom-color: $gold;
+}
