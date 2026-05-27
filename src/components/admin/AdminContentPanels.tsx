@@ -1643,7 +1643,7 @@ export function HelpPanel({ notify }: { notify: Notify }) {
               body: "",
               diagram_url: null,
               diagram_caption: null,
-              contact_email: slug === "contact-us" ? "afreshfashions@gmail.com" : null,
+              contact_email: slug === "contact-us" ? "info@afreshfashion.com" : null,
               sort_order: 0,
               status: "draft" as ContentStatus,
             }

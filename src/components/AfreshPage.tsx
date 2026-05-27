@@ -108,7 +108,7 @@ export default function AfreshPage() {
   const publicContactEmail =
     helpBySlug["contact-us"]?.contact_email?.trim() ||
     content.contact?.email?.trim() ||
-    "afreshfashions@gmail.com";
+    "info@afreshfashion.com";
 
   const openHelp = (label: string) => {
     const slug = footerLabelToHelpSlug(label);
