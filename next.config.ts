@@ -1,3 +1,4 @@
+import path from "node:path";
 import { spawnSync } from "node:child_process";
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
@@ -31,6 +32,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  sassOptions: {
+    includePaths: [path.join(process.cwd(), "src", "styles")],
+  },
   images: {
     remotePatterns: [
       {

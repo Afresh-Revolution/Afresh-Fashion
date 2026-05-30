@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Cormorant_Garamond, Inter } from "next/font/google";
 import PwaProvider from "@/components/PwaProvider";
-import "@/styles/globals.scss";
+import "./globals.scss";
 
 const bebas = Bebas_Neue({
   weight: "400",
