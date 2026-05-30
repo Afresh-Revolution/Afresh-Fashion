@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSiteContent, published } from "@/lib/content";
+import { resolveMediaUrl } from "@/lib/b2";
 
 export async function GET() {
   try {
@@ -30,8 +31,19 @@ export async function GET() {
       contact: content.contact,
       footer: content.footer,
       helpPages: content.helpPages,
-      cinematic: content.cinematic,
-      cinematicVideos: published(content.cinematicVideos).filter((v) => v.video_url),
+      cinematic: content.cinematic
+        ? {
+            ...content.cinematic,
+            image_url: resolveMediaUrl(content.cinematic.image_url),
+          }
+        : null,
+      cinematicVideos: published(content.cinematicVideos)
+        .filter((v) => v.video_url)
+        .map((v) => ({
+          ...v,
+          video_url: resolveMediaUrl(v.video_url)!,
+          poster_url: resolveMediaUrl(v.poster_url),
+        })),
     },
       {
         headers: {

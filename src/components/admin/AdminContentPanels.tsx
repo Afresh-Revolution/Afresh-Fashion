@@ -48,7 +48,17 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
-  const data = await res.json();
+  const text = await res.text();
+  let data: { error?: string };
+  try {
+    data = JSON.parse(text) as { error?: string };
+  } catch {
+    throw new Error(
+      res.ok
+        ? "Invalid server response"
+        : `Server error (${res.status}). Stop the dev server, delete the .next folder, and run npm run dev again.`
+    );
+  }
   if (!res.ok) throw new Error(data.error || "Request failed");
   return data as T;
 }
@@ -909,15 +919,25 @@ export function CinematicPanel({ notify }: { notify: Notify }) {
 
   const saveVideo = async (item: CinematicVideo) => {
     if (!item.video_url) {
-      notify("Add a video URL before saving");
+      notify("Upload a video before saving");
       return;
     }
-    const updated = await api<CinematicVideo>(`/api/admin/cinematic-videos/${item.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(item),
-    });
-    setVideos((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-    notify("Video saved");
+    try {
+      const updated = await api<CinematicVideo>(`/api/admin/cinematic-videos/${item.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: item.title,
+          video_url: item.video_url,
+          poster_url: item.poster_url,
+          sort_order: item.sort_order,
+          status: item.status,
+        }),
+      });
+      setVideos((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      notify("Video saved");
+    } catch (e) {
+      notify(e instanceof Error ? e.message : "Could not save video");
+    }
   };
 
   if (loading) return <p className={styles.empty}>Loading…</p>;

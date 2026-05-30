@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { randomBytes } from "crypto";
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
@@ -54,11 +54,50 @@ function wrapUploadError(err: unknown): Error {
   return err;
 }
 
-function publicUrl(bucket: string, key: string) {
-  const base =
-    process.env.B2_PUBLIC_BASE_URL?.replace(/\/$/, "") ||
-    `${process.env.B2_ENDPOINT?.replace(/\/$/, "")}/${bucket}`;
-  return `${base}/${key}`;
+/** Extract object key from a stored B2 URL (friendly or S3 path-style). */
+export function b2KeyFromStoredUrl(url: string): string | null {
+  const bucket = process.env.B2_BUCKET_NAME;
+  if (!bucket) return null;
+
+  try {
+    const u = new URL(url);
+    const fileMatch = u.pathname.match(/^\/file\/[^/]+\/(.+)$/);
+    if (fileMatch) return decodeURIComponent(fileMatch[1]);
+
+    const pathPrefix = `/${bucket}/`;
+    if (u.pathname.startsWith(pathPrefix)) {
+      return decodeURIComponent(u.pathname.slice(pathPrefix.length));
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function mediaProxyUrlForKey(key: string): string {
+  return `/api/media/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+/** Serve private B2 files through our media proxy; pass through external URLs. */
+export function resolveMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("/api/media/")) return url;
+
+  const key = b2KeyFromStoredUrl(url);
+  if (key?.startsWith("afresh/")) return mediaProxyUrlForKey(key);
+
+  return url;
+}
+
+export async function getB2Object(key: string, range?: string) {
+  const { client, bucket } = getClient();
+  return client.send(
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Range: range,
+    })
+  );
 }
 
 export function validateUploadSize(bytes: number, kind: "image" | "video") {
@@ -93,5 +132,5 @@ export async function uploadToB2(
     throw wrapUploadError(err);
   }
 
-  return { key, url: publicUrl(bucket, key) };
+  return { key, url: mediaProxyUrlForKey(key) };
 }

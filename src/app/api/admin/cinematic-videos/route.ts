@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { adminError } from "@/lib/admin-api-response";
+import { resolveMediaUrl } from "@/lib/b2";
 
 export async function GET() {
   try {
@@ -10,7 +11,13 @@ export async function GET() {
       `SELECT id, title, video_url, poster_url, sort_order, status, file_size_bytes
        FROM cinematic_videos ORDER BY sort_order ASC`
     );
-    return NextResponse.json(rows);
+    return NextResponse.json(
+      rows.map((row) => ({
+        ...row,
+        video_url: resolveMediaUrl(row.video_url),
+        poster_url: resolveMediaUrl(row.poster_url),
+      }))
+    );
   } catch (err) {
     return adminError(err);
   }
@@ -36,7 +43,14 @@ export async function POST(request: Request) {
         body.status ?? "draft",
       ]
     );
-    return NextResponse.json(rows[0], { status: 201 });
+    return NextResponse.json(
+      {
+        ...rows[0],
+        video_url: resolveMediaUrl(rows[0].video_url),
+        poster_url: resolveMediaUrl(rows[0].poster_url),
+      },
+      { status: 201 }
+    );
   } catch (err) {
     return adminError(err);
   }

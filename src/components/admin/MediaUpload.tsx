@@ -28,8 +28,15 @@ export default function MediaUpload({ folder, kind = "image", label, currentUrl,
       form.append("folder", folder);
       form.append("kind", kind);
       const res = await fetch("/api/admin/upload", { method: "POST", body: form });
-      const data = await res.json();
+      const text = await res.text();
+      let data: { url?: string; error?: string };
+      try {
+        data = JSON.parse(text) as { url?: string; error?: string };
+      } catch {
+        throw new Error(res.ok ? "Invalid upload response" : `Upload failed (${res.status})`);
+      }
       if (!res.ok) throw new Error(data.error || "Upload failed");
+      if (!data.url) throw new Error("Upload did not return a URL");
       onUploaded(data.url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");

@@ -29,6 +29,9 @@ export function rateLimitForPath(pathname: string): RateLimitConfig | null {
   if (pathname.startsWith("/api/health")) {
     return { limit: 300, windowMs: 60_000 };
   }
+  if (pathname.startsWith("/api/media")) {
+    return { limit: 600, windowMs: 60_000 };
+  }
   if (pathname.startsWith("/api/content")) {
     return { limit: 120, windowMs: 60_000 };
   }

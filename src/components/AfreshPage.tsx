@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import {
@@ -139,8 +139,25 @@ export default function AfreshPage() {
       return;
     }
     setFilmOpen(true);
-    requestAnimationFrame(() => videoRef.current?.play().catch(() => {}));
   };
+
+  useEffect(() => {
+    if (!filmOpen) return;
+    const el = videoRef.current;
+    if (!el) return;
+
+    const play = () => {
+      void el.play().catch(() => {});
+    };
+
+    if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      play();
+      return;
+    }
+
+    el.addEventListener("loadeddata", play, { once: true });
+    return () => el.removeEventListener("loadeddata", play);
+  }, [filmOpen, videoIndex]);
 
   const nextFilm = () => {
     if (videos.length <= 1) return;
@@ -475,7 +492,7 @@ export default function AfreshPage() {
       )}
 
       {(cinematic || videos.length > 0) && (
-        <section className={styles.cinematic}>
+        <section className={`${styles.cinematic} ${filmOpen ? styles.cinematicPlaying : ""}`}>
           {filmOpen && videos[videoIndex] ? (
             <video
               ref={videoRef}
@@ -497,7 +514,7 @@ export default function AfreshPage() {
               alt="Cinematic Break"
             />
           )}
-          {cinematic && (
+          {!filmOpen && cinematic && (
             <div className={styles.cinematicOverlay}>
               <div>
                 <p className={`${styles.cinematicQuote} reveal`}>
@@ -509,14 +526,16 @@ export default function AfreshPage() {
               </div>
             </div>
           )}
-          <button
-            type="button"
-            className={`play-btn ${styles.playBtn}`}
-            onClick={playFilm}
-            aria-label="Play film"
-          >
-            <Play size={24} style={{ marginLeft: 4 }} />
-          </button>
+          {!filmOpen && (
+            <button
+              type="button"
+              className={`play-btn ${styles.playBtn}`}
+              onClick={playFilm}
+              aria-label="Play film"
+            >
+              <Play size={24} style={{ marginLeft: 4 }} />
+            </button>
+          )}
           {filmOpen && videos.length > 1 && (
             <button
               type="button"

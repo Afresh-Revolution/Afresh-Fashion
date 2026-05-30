@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { adminError } from "@/lib/admin-api-response";
+import { resolveMediaUrl } from "@/lib/b2";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -33,7 +34,12 @@ export async function PATCH(request: Request, { params }: Params) {
       ]
     );
     if (!rows[0]) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(rows[0]);
+    const row = rows[0];
+    return NextResponse.json({
+      ...row,
+      video_url: resolveMediaUrl(row.video_url),
+      poster_url: resolveMediaUrl(row.poster_url),
+    });
   } catch (err) {
     return adminError(err);
   }
