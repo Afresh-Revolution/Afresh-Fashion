@@ -8,9 +8,16 @@ export function getPool() {
     throw new Error("DATABASE_URL is not set");
   }
   if (!globalForPg.pgPool) {
+    const max = Math.min(Math.max(Number(process.env.PG_POOL_MAX) || 8, 2), 20);
     globalForPg.pgPool = new Pool({
       connectionString: url,
+      max,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 8_000,
       ssl: url.includes("localhost") ? undefined : { rejectUnauthorized: false },
+    });
+    globalForPg.pgPool.on("connect", (client) => {
+      void client.query("SET statement_timeout = 15000");
     });
   }
   return globalForPg.pgPool;

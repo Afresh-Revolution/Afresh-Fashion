@@ -1,11 +1,11 @@
 import { query } from "@/lib/db";
+import { computeShippingAmount } from "@/lib/api-security";
 import { loadProductImageMap, resolveProductImageUrls } from "@/lib/product-images";
 import type { CheckoutForm, OrderSummary } from "@/types/cart";
 import { getCartForSession } from "@/lib/cart";
 
 export type CreateOrderInput = CheckoutForm & {
   sessionToken: string;
-  shipping_amount?: number;
 };
 
 export async function createOrderFromCart(input: CreateOrderInput) {
@@ -14,9 +14,13 @@ export async function createOrderFromCart(input: CreateOrderInput) {
     throw new Error("Your bag is empty");
   }
 
-  const shipping = input.shipping_amount ?? 0;
   const subtotal = cart.subtotal_amount;
+  const shipping = computeShippingAmount(subtotal);
   const total = subtotal + shipping;
+
+  if (total <= 0) {
+    throw new Error("Invalid order total");
+  }
 
   const shipping_address = {
     line1: input.address_line1,

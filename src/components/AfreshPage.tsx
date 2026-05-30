@@ -118,7 +118,9 @@ export default function AfreshPage() {
   };
 
   const cinematic = content.cinematic;
-  const videos = content.cinematicVideos;
+  const videos = content.cinematicVideos.filter(
+    (v): v is (typeof v & { video_url: string }) => Boolean(v.video_url),
+  );
   const featuredEditorial = content.editorial.filter(
     (a) => a.layout === "featured",
   );

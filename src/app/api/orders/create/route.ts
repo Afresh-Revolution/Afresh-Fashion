@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/api-security";
 import { getOrCreateSession } from "@/lib/cart";
 import { createOrderFromCart } from "@/lib/orders";
 
@@ -6,7 +7,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readJsonBody<Record<string, unknown>>(request);
     const email = String(body.email || "").trim().toLowerCase();
     if (!EMAIL_RE.test(email)) {
       return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
@@ -31,16 +32,15 @@ export async function POST(request: Request) {
     const order = await createOrderFromCart({
       sessionToken: token,
       email,
-      full_name: body.full_name,
-      phone: body.phone,
-      address_line1: body.address_line1,
-      address_line2: body.address_line2,
-      city: body.city,
-      state: body.state,
-      country: body.country,
-      postal_code: body.postal_code,
-      customer_notes: body.customer_notes,
-      shipping_amount: Number(body.shipping_amount) || 0,
+      full_name: String(body.full_name).trim(),
+      phone: String(body.phone).trim(),
+      address_line1: String(body.address_line1).trim(),
+      address_line2: String(body.address_line2 || "").trim(),
+      city: String(body.city).trim(),
+      state: String(body.state).trim(),
+      country: String(body.country).trim(),
+      postal_code: String(body.postal_code || "").trim(),
+      customer_notes: String(body.customer_notes || "").trim() || undefined,
     });
 
     return NextResponse.json({ order });

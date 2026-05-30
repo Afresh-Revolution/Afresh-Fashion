@@ -2,6 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Allow re-running after helper signature changes (Postgres cannot REPLACE return type).
+DROP FUNCTION IF EXISTS afresh_drop_not_null_if_needed(TEXT, TEXT);
 DROP FUNCTION IF EXISTS afresh_add_constraint_if_missing(TEXT, TEXT);
 DROP FUNCTION IF EXISTS afresh_add_column_if_missing(TEXT, TEXT, TEXT);
 
@@ -25,6 +26,35 @@ BEGIN
     RETURN 'skip (exists): ' || p_table || '.' || p_column;
   END IF;
   EXECUTE format('ALTER TABLE %I ADD COLUMN %I %s', p_table, p_column, p_definition);
+  RETURN 'ok: ' || p_table || '.' || p_column;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN 'error: ' || p_table || '.' || p_column || ' — ' || SQLERRM;
+END;
+$$;
+
+-- Relax NOT NULL only when the column is still required (no row updates).
+CREATE OR REPLACE FUNCTION afresh_drop_not_null_if_needed(
+  p_table TEXT,
+  p_column TEXT
+) RETURNS TEXT LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = p_table
+  ) THEN
+    RETURN 'skip (no table): ' || p_table;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = p_table
+      AND column_name = p_column
+      AND is_nullable = 'NO'
+  ) THEN
+    RETURN 'skip (already nullable or missing): ' || p_table || '.' || p_column;
+  END IF;
+  EXECUTE format('ALTER TABLE %I ALTER COLUMN %I DROP NOT NULL', p_table, p_column);
   RETURN 'ok: ' || p_table || '.' || p_column;
 EXCEPTION
   WHEN OTHERS THEN
@@ -363,7 +393,7 @@ CREATE TRIGGER trg_cinematic_section_updated_at
 CREATE TABLE IF NOT EXISTS cinematic_videos (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title           TEXT,
-  video_url       TEXT NOT NULL,
+  video_url       TEXT,
   poster_url      TEXT,
   file_size_bytes BIGINT CHECK (file_size_bytes IS NULL OR file_size_bytes > 0),
   mime_type       TEXT,
@@ -946,8 +976,16 @@ CREATE TRIGGER trg_orders_order_number
 
 DO $afresh_sync$
 BEGIN
+  PERFORM afresh_add_column_if_missing('admin_users', 'full_name', 'TEXT');
+  PERFORM afresh_add_column_if_missing('admin_users', 'role', 'admin_role NOT NULL DEFAULT ''editor''');
+  PERFORM afresh_add_column_if_missing('admin_users', 'is_active', 'BOOLEAN NOT NULL DEFAULT TRUE');
+  PERFORM afresh_add_column_if_missing('admin_users', 'last_login_at', 'TIMESTAMPTZ');
+  PERFORM afresh_add_column_if_missing('admin_users', 'created_at', 'TIMESTAMPTZ NOT NULL DEFAULT NOW()');
+  PERFORM afresh_add_column_if_missing('admin_users', 'updated_at', 'TIMESTAMPTZ NOT NULL DEFAULT NOW()');
   PERFORM afresh_add_column_if_missing('cinematic_videos', 'file_size_bytes', 'BIGINT');
   PERFORM afresh_add_column_if_missing('cinematic_videos', 'mime_type', 'TEXT');
+  -- Draft video slots: allow NULL video_url; existing URLs are unchanged.
+  PERFORM afresh_drop_not_null_if_needed('cinematic_videos', 'video_url');
   PERFORM afresh_add_column_if_missing('vip_email_campaigns', 'recipient_count', 'INTEGER NOT NULL DEFAULT 0');
   PERFORM afresh_add_column_if_missing('vip_email_campaigns', 'sent_at', 'TIMESTAMPTZ');
   PERFORM afresh_add_column_if_missing('admin_notifications', 'metadata', 'JSONB NOT NULL DEFAULT ''{}''');

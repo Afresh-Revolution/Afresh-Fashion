@@ -5,7 +5,7 @@ import { loadProductImageMap, resolveProductImageUrls } from "@/lib/product-imag
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const q = (searchParams.get("q") || "").trim();
+    const q = (searchParams.get("q") || "").trim().slice(0, 80);
     if (q.length < 2) {
       return NextResponse.json({ results: [] });
     }

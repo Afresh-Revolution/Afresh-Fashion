@@ -13,7 +13,7 @@
 
 :global(html[data-pwa]) {
   .navbar {
-    top: 5px;
+    top: var(--pwa-nav-offset, 15px);
   }
 }
 

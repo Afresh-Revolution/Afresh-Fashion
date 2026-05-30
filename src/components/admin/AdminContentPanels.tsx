@@ -894,12 +894,17 @@ export function CinematicPanel({ notify }: { notify: Notify }) {
   };
 
   const addVideo = async () => {
-    notify("Upload a landscape video first, then save the entry");
-    const created = await api<CinematicVideo>("/api/admin/cinematic-videos", {
-      method: "POST",
-      body: JSON.stringify({ title: "Film", video_url: "", status: "draft", sort_order: videos.length }),
-    });
-    setVideos((prev) => [...prev, created]);
+    try {
+      const created = await api<CinematicVideo>("/api/admin/cinematic-videos", {
+        method: "POST",
+        body: JSON.stringify({ title: "Film", status: "draft", sort_order: videos.length }),
+      });
+      setActiveVideo(videos.length);
+      setVideos((prev) => [...prev, created]);
+      notify("Video slot added — upload a landscape video below");
+    } catch (e) {
+      notify(e instanceof Error ? e.message : "Could not add video slot");
+    }
   };
 
   const saveVideo = async (item: CinematicVideo) => {
@@ -968,6 +973,11 @@ export function CinematicPanel({ notify }: { notify: Notify }) {
             Add video slot
           </button>
         </div>
+        {videos.length === 0 && (
+          <p className={styles.empty} style={{ marginTop: "1rem" }}>
+            No landscape videos yet. Add a slot, then upload a file (max 100MB).
+          </p>
+        )}
         {videos.length > 0 && (
           <div className={styles.videoTabs}>
             {videos.map((v, i) => (

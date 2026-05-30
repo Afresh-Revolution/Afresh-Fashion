@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireOrderSession } from "@/lib/api-security";
 import { query } from "@/lib/db";
 import { getOrderById } from "@/lib/orders";
 import { buildPaystackReference, paystackInitialize } from "@/lib/paystack";
@@ -13,8 +14,14 @@ export async function POST(_request: Request, { params }: Params) {
     }
 
     const { id } = await params;
+    const denied = await requireOrderSession(id);
+    if (denied) return denied;
+
     const order = await getOrderById(id);
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    if (order.payment_status === "paid") {
+      return NextResponse.json({ error: "Order is already paid" }, { status: 400 });
+    }
 
     const reference = buildPaystackReference(order.order_number);
 

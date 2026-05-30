@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/api-security";
 import { query } from "@/lib/db";
 import { getOrderById, markOrderPaidPaystack } from "@/lib/orders";
 import { notifyPaystackPaid } from "@/lib/order-notifications";
@@ -6,7 +7,7 @@ import { paystackVerify } from "@/lib/paystack";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ reference?: string }>(request, 4096);
     const reference = String(body.reference || "").trim();
     if (!reference) {
       return NextResponse.json({ error: "reference required" }, { status: 400 });

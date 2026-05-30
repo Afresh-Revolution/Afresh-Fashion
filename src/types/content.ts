@@ -75,7 +75,7 @@ export interface EditorialItem {
 export interface CinematicVideo {
   id: string;
   title: string | null;
-  video_url: string;
+  video_url: string | null;
   poster_url: string | null;
   sort_order: number;
   status: ContentStatus;

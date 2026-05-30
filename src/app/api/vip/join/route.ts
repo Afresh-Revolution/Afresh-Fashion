@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/api-security";
 import { processVipSignup } from "@/lib/vip";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ email?: string }>(request, 4096);
     const email = String(body.email || "").trim().toLowerCase();
 
     if (!EMAIL_RE.test(email)) {

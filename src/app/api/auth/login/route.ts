@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/api-security";
 import {
   createSessionToken,
   findAdminByEmail,
@@ -9,7 +10,7 @@ import {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ email?: string; password?: string }>(request, 4096);
     const email = typeof body.email === "string" ? body.email.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
 

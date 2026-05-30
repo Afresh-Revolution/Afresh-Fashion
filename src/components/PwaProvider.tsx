@@ -19,7 +19,12 @@ function PwaDocumentAttributes() {
     };
     sync();
     window.addEventListener("resize", sync);
-    return () => window.removeEventListener("resize", sync);
+    const displayMode = window.matchMedia("(display-mode: standalone), (display-mode: fullscreen)");
+    displayMode.addEventListener("change", sync);
+    return () => {
+      window.removeEventListener("resize", sync);
+      displayMode.removeEventListener("change", sync);
+    };
   }, []);
   return null;
 }

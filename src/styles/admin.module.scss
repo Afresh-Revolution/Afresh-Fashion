@@ -53,6 +53,22 @@
   }
 }
 
+:global(html[data-pwa]) {
+  .sidebar {
+    top: var(--pwa-nav-offset, 15px);
+  }
+
+  .main {
+    @media (max-width: $bp-lg) {
+      padding-top: calc(1rem + var(--pwa-nav-offset, 15px));
+    }
+
+    @media (max-width: $bp-sm) {
+      padding-top: calc(0.75rem + var(--pwa-nav-offset, 15px));
+    }
+  }
+}
+
 .sidebarLogo {
   margin-bottom: 2.5rem;
 }

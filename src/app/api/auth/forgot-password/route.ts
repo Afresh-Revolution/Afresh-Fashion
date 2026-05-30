@@ -1,11 +1,12 @@
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
-import { findAdminByEmail, hashResetToken } from "@/lib/auth";
+import { hashResetTokenLookup, readJsonBody } from "@/lib/api-security";
+import { findAdminByEmail } from "@/lib/auth";
 import { query } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ email?: string }>(request, 4096);
     const email = typeof body.email === "string" ? body.email.trim() : "";
 
     if (!email) {
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const rawToken = randomBytes(32).toString("hex");
-    const tokenHash = hashResetToken(rawToken);
+    const tokenHash = hashResetTokenLookup(rawToken);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     await query(

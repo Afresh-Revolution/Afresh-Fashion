@@ -20,16 +20,15 @@ export async function POST(request: Request) {
   try {
     await requireAdmin();
     const body = await request.json();
-    if (!body.video_url) {
-      return NextResponse.json({ error: "video_url is required" }, { status: 400 });
-    }
+    const videoUrl =
+      typeof body.video_url === "string" && body.video_url.trim() ? body.video_url.trim() : null;
     const { rows } = await query(
       `INSERT INTO cinematic_videos (title, video_url, poster_url, file_size_bytes, mime_type, sort_order, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, title, video_url, poster_url, sort_order, status`,
       [
         body.title ?? null,
-        body.video_url,
+        videoUrl,
         body.poster_url ?? null,
         body.file_size_bytes ?? null,
         body.mime_type ?? null,

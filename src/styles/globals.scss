@@ -17,6 +17,11 @@ html {
   scroll-behavior: smooth;
 }
 
+// Installed PWA (standalone) — extra top inset for status bar / notch
+html[data-pwa] {
+  --pwa-nav-offset: 15px;
+}
+
 body {
   font-family: var(--font-body), $font-body;
   background: $matte;

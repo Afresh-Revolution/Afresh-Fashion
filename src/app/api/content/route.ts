@@ -5,7 +5,8 @@ export async function GET() {
   try {
     const content = await getSiteContent();
 
-    return NextResponse.json({
+    return NextResponse.json(
+      {
       settings: content.settings,
       hero: content.hero,
       about: content.about,
@@ -30,8 +31,14 @@ export async function GET() {
       footer: content.footer,
       helpPages: content.helpPages,
       cinematic: content.cinematic,
-      cinematicVideos: published(content.cinematicVideos),
-    });
+      cinematicVideos: published(content.cinematicVideos).filter((v) => v.video_url),
+    },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err) {
     console.error("Content fetch error:", err);
     return NextResponse.json({ error: "Failed to load content" }, { status: 500 });
