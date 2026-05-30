@@ -4,8 +4,19 @@ import { randomBytes } from "crypto";
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
+/** Region code from B2 bucket settings, e.g. eu-central-003 or us-west-004. */
+function parseB2Region(endpoint: string): string {
+  const match = endpoint.match(/s3\.([a-z0-9-]+)\.backblazeb2\.com/i);
+  if (!match) {
+    throw new Error(
+      "B2_ENDPOINT must be https://s3.<region>.backblazeb2.com — copy the S3 endpoint from your B2 bucket page (do not guess the region from your key ID)."
+    );
+  }
+  return match[1];
+}
+
 function getClient() {
-  const endpoint = process.env.B2_ENDPOINT;
+  const endpoint = process.env.B2_ENDPOINT?.replace(/\/$/, "");
   const keyId = process.env.B2_APPLICATION_KEY_ID;
   const secret = process.env.B2_APPLICATION_KEY;
   const bucket = process.env.B2_BUCKET_NAME;
@@ -14,15 +25,33 @@ function getClient() {
     throw new Error("Backblaze B2 environment variables are not configured");
   }
 
+  const region = process.env.B2_REGION?.trim() || parseB2Region(endpoint);
+
   return {
     client: new S3Client({
       endpoint,
-      region: "us-west-003",
+      region,
       credentials: { accessKeyId: keyId, secretAccessKey: secret },
       forcePathStyle: true,
     }),
     bucket,
   };
+}
+
+function wrapUploadError(err: unknown): Error {
+  if (!(err instanceof Error)) return new Error("Upload to storage failed");
+
+  const msg = err.message.toLowerCase();
+  if (msg.includes("enotfound") || msg.includes("getaddrinfo")) {
+    return new Error(
+      "Storage endpoint could not be reached. Check B2_ENDPOINT in .env matches the S3 endpoint shown on your Backblaze bucket page."
+    );
+  }
+  if (msg.includes("invalidaccesskeyid") || msg.includes("signaturedoesnotmatch")) {
+    return new Error("Backblaze credentials are invalid. Check B2_APPLICATION_KEY_ID and B2_APPLICATION_KEY.");
+  }
+
+  return err;
 }
 
 function publicUrl(bucket: string, key: string) {
@@ -51,14 +80,18 @@ export async function uploadToB2(
   const safeName = opts.filename.replace(/[^a-zA-Z0-9._-]/g, "-");
   const key = `afresh/${opts.folder}/${Date.now()}-${randomBytes(4).toString("hex")}-${safeName}`;
 
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: file,
-      ContentType: opts.contentType,
-    })
-  );
+  try {
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: file,
+        ContentType: opts.contentType,
+      })
+    );
+  } catch (err) {
+    throw wrapUploadError(err);
+  }
 
   return { key, url: publicUrl(bucket, key) };
 }

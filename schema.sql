@@ -1374,10 +1374,10 @@ JOIN (VALUES
 ) AS t(band, txt, ord) ON b.slug = t.band
 WHERE NOT EXISTS (SELECT 1 FROM marquee_items mi WHERE mi.band_id = b.id AND mi.text = t.txt);
 
--- Studio admin seed (change password after first login)
+-- Studio admin seed
 INSERT INTO admin_users (email, password_hash, full_name, role) VALUES (
-  'williambosworth420@gmail.com',
-  '$2b$12$qrqPgOGxYAywkdSWd9jjduTxsSbxjb8g3mktXUefcAuOZrW8ZuWeK',
+  'afreshfashions@gmail.com',
+  '$2b$12$6vfCFG4LBxxFVZAJKQrOhenjVsr82cXg8YeAww4KjPylE4K8gLb8a',
   'Studio Admin',
   'superadmin'
 ) ON CONFLICT (email) DO UPDATE SET

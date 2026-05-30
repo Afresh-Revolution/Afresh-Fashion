@@ -2,6 +2,13 @@ import { Pool, type QueryResultRow } from "pg";
 
 const globalForPg = globalThis as typeof globalThis & { pgPool?: Pool };
 
+/** Apply server-side defaults without a connect-handler query (avoids pg concurrent-query warning). */
+function withPoolDefaults(url: string) {
+  if (/[?&]statement_timeout=/i.test(url)) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}statement_timeout=15000`;
+}
+
 export function getPool() {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -10,14 +17,11 @@ export function getPool() {
   if (!globalForPg.pgPool) {
     const max = Math.min(Math.max(Number(process.env.PG_POOL_MAX) || 8, 2), 20);
     globalForPg.pgPool = new Pool({
-      connectionString: url,
+      connectionString: withPoolDefaults(url),
       max,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 8_000,
       ssl: url.includes("localhost") ? undefined : { rejectUnauthorized: false },
-    });
-    globalForPg.pgPool.on("connect", (client) => {
-      void client.query("SET statement_timeout = 15000");
     });
   }
   return globalForPg.pgPool;
