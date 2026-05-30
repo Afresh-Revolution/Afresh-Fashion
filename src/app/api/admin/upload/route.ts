@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { uploadToB2, validateUploadSize } from "@/lib/b2";
 import { requireAdmin, UnauthorizedError } from "@/lib/require-admin";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
@@ -44,10 +45,6 @@ export async function POST(request: Request) {
     if (err instanceof UnauthorizedError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.error("Upload error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Upload failed" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err, "Upload failed", 500);
   }
 }

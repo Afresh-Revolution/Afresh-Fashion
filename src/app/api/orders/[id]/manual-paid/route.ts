@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOrderSession } from "@/lib/api-security";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 import { getOrderById, markManualPaymentPending } from "@/lib/orders";
 import { notifyManualPaymentSubmitted } from "@/lib/order-notifications";
 
@@ -27,10 +28,6 @@ export async function POST(request: Request, { params }: Params) {
       order,
     });
   } catch (err) {
-    console.error("manual-paid:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not submit payment" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err, "Could not submit payment", 500);
   }
 }

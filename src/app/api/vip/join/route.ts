@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/api-security";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 import { processVipSignup } from "@/lib/vip";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,10 +25,6 @@ export async function POST(request: Request) {
         : "You're already on the list ✦",
     });
   } catch (err) {
-    console.error("VIP join error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not complete signup" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err, "Could not complete signup", 500);
   }
 }

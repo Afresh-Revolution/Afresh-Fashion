@@ -45,6 +45,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("Login error:", err);
-    return NextResponse.json({ error: "Unable to sign in. Check database connection." }, { status: 500 });
+    return NextResponse.json({ error: "Unable to sign in" }, { status: 500 });
   }
 }

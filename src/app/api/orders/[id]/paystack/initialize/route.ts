@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOrderSession } from "@/lib/api-security";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 import { query } from "@/lib/db";
 import { getOrderById } from "@/lib/orders";
 import { buildPaystackReference, paystackInitialize } from "@/lib/paystack";
@@ -42,10 +43,6 @@ export async function POST(_request: Request, { params }: Params) {
       reference: init.reference,
     });
   } catch (err) {
-    console.error("paystack init:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not start payment" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err, "Could not start payment", 500);
   }
 }

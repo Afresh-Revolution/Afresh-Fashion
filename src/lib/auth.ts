@@ -95,10 +95,3 @@ export async function updateLastLogin(adminId: string) {
   await query(`UPDATE admin_users SET last_login_at = NOW() WHERE id = $1`, [adminId]);
 }
 
-export function hashResetToken(token: string) {
-  return bcrypt.hashSync(token, 10);
-}
-
-export function verifyResetToken(token: string, hash: string) {
-  return bcrypt.compareSync(token, hash);
-}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { addProductToCart } from "@/lib/cart";
 import { getOrCreateSession } from "@/lib/cart";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 
 export async function POST(request: Request) {
   try {
@@ -15,10 +16,10 @@ export async function POST(request: Request) {
     const cart = await addProductToCart(token, productId, quantity);
     return NextResponse.json(cart);
   } catch (err) {
-    console.error("cart add:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not add to bag" },
-      { status: 400 }
-    );
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "Product not available" || msg === "Not enough stock") {
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    return apiErrorResponse(err, "Could not add to bag", 400);
   }
 }

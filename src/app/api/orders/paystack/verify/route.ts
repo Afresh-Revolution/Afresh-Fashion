@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/api-security";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 import { query } from "@/lib/db";
 import { getOrderById, markOrderPaidPaystack } from "@/lib/orders";
 import { notifyPaystackPaid } from "@/lib/order-notifications";
@@ -32,10 +33,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, order });
   } catch (err) {
-    console.error("paystack verify:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Verification failed" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err, "Verification failed", 500);
   }
 }

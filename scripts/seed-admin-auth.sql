@@ -1,5 +1,5 @@
 -- Idempotent admin auth setup (safe to re-run)
--- Password: Willy1@gmail.com
+-- Set ADMIN_SEED_PASSWORD in your environment before running, or change password after first login.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 

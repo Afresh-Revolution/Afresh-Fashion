@@ -31,7 +31,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   sassOptions: {
     includePaths: [path.join(process.cwd(), "src", "styles")],
   },

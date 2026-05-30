@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { loadProductImageMap, resolveProductImageUrls } from "@/lib/product-images";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 
 export async function GET(request: Request) {
   try {
@@ -46,10 +47,6 @@ export async function GET(request: Request) {
       }),
     });
   } catch (err) {
-    console.error("search:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Search failed" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err, "Search failed", 500);
   }
 }

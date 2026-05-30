@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCartForSession } from "@/lib/cart";
 import { getCartSessionToken } from "@/lib/cart-session";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 
 export async function GET() {
   try {
@@ -25,10 +26,6 @@ export async function GET() {
       }
     );
   } catch (err) {
-    console.error("cart GET:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not load bag" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err, "Could not load bag", 500);
   }
 }

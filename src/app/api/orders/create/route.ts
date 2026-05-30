@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/api-security";
+import { apiErrorResponse } from "@/lib/safe-api-error";
 import { getOrCreateSession } from "@/lib/cart";
 import { createOrderFromCart } from "@/lib/orders";
 
@@ -45,10 +46,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ order });
   } catch (err) {
-    console.error("order create:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not create order" },
-      { status: 400 }
-    );
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "Your bag is empty" || msg === "Invalid order total") {
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    return apiErrorResponse(err, "Could not create order", 400);
   }
 }
