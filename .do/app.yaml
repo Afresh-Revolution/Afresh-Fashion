@@ -1,0 +1,23 @@
+# DigitalOcean App Platform — ensures build runs before start.
+# In the DO dashboard: App → Settings → confirm this spec is used, or paste build/run commands:
+#   Build:  npm ci && npm run build
+#   Run:    npm start
+
+name: afresh-fashion
+region: nyc
+
+services:
+  - name: web
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    build_command: npm ci && npm run build
+    run_command: npm start
+    environment_slug: node-js
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: HOSTNAME
+        value: "0.0.0.0"

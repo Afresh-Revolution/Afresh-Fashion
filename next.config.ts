@@ -3,6 +3,7 @@ import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 
 function getRevision() {
+  if (process.env.BUILD_REVISION) return process.env.BUILD_REVISION;
   const result = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf-8" });
   return result.stdout?.trim() || `build-${Date.now()}`;
 }
@@ -29,6 +30,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       {
