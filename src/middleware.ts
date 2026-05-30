@@ -2,9 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth-edge";
 import { rateLimitForPath } from "@/lib/api-rate-limits";
+import { isRscExploitProbe } from "@/lib/block-rsc-probes";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
+
+function blockExploitProbe(request: NextRequest) {
+  if (!isRscExploitProbe(request)) return null;
+  return new NextResponse(null, { status: 404 });
+}
 
 function apiRateLimit(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -43,6 +49,9 @@ async function requireAdminApi(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
+  const blocked = blockExploitProbe(request);
+  if (blocked) return blocked;
+
   const { pathname } = request.nextUrl;
 
   const limited = apiRateLimit(request);
@@ -86,5 +95,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };
