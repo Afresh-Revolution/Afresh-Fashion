@@ -300,6 +300,7 @@ export default function CheckoutDrawer({ cart, currency = "₦", showToast, onSh
                   <a href={config.manual.contactUrl} target="_blank" rel="noopener noreferrer" className={styles.whatsApp}>
                     Contact us on WhatsApp after paying
                   </a>
+                  
                 )}
                 <button type="button" className={styles.paidBtn} onClick={() => void manualPaid()} disabled={submitting}>
                   I&apos;ve paid — submit for confirmation
