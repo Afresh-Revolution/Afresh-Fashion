@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { resolveImage } from "@/hooks/useSiteContent";
+import type { LightboxState } from "@/components/ImageLightbox";
+import { openLightbox, singleLightboxImage } from "@/lib/lightbox";
+import lightboxStyles from "@/styles/image-lightbox.module.scss";
 import type { HeroSection as HeroContent } from "@/types/content";
 import styles from "@/styles/home.module.scss";
 
@@ -11,6 +14,7 @@ const SLIDE_INTERVAL_MS = 5000;
 type Props = {
   hero: HeroContent;
   onNavigate: (href: string) => void;
+  onOpenLightbox?: (state: LightboxState) => void;
 };
 
 function buildBackgrounds(hero: HeroContent): string[] {
@@ -20,7 +24,7 @@ function buildBackgrounds(hero: HeroContent): string[] {
   return [resolveImage("afresh-hero-dark", null, 1920, 1080)];
 }
 
-export default function HeroSection({ hero, onNavigate }: Props) {
+export default function HeroSection({ hero, onNavigate, onOpenLightbox }: Props) {
   const titleChars = hero.title.split("");
   const backgrounds = useMemo(() => buildBackgrounds(hero), [hero]);
   const backgroundsKey = backgrounds.join("|");
@@ -38,10 +42,37 @@ export default function HeroSection({ hero, onNavigate }: Props) {
     return () => window.clearInterval(timer);
   }, [backgrounds.length]);
 
+  const openHeroLightbox = () => {
+    if (!onOpenLightbox) return;
+    onOpenLightbox(
+      openLightbox(
+        backgrounds.map((url, i) => singleLightboxImage(`hero-${i}`, url, `Hero slide ${i + 1}`)),
+        activeIndex,
+      )!,
+    );
+  };
+
   return (
     <section id="hero" className={styles.hero} aria-label="Afresh hero">
       <div className={styles.heroStage}>
-        <div className={styles.heroImageWrap} id="heroImageWrap">
+        <div
+          className={`${styles.heroImageWrap} ${onOpenLightbox ? lightboxStyles.clickable : ""}`}
+          id="heroImageWrap"
+          onClick={onOpenLightbox ? openHeroLightbox : undefined}
+          onKeyDown={
+            onOpenLightbox
+              ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openHeroLightbox();
+                  }
+                }
+              : undefined
+          }
+          role={onOpenLightbox ? "button" : undefined}
+          tabIndex={onOpenLightbox ? 0 : undefined}
+          aria-label={onOpenLightbox ? "View hero images" : undefined}
+        >
           <div className={styles.heroImageStack}>
             {backgrounds.map((url, i) => (
               <img

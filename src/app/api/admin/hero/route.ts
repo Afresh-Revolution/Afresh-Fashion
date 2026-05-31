@@ -46,26 +46,25 @@ export async function PATCH(request: Request) {
     if (Array.isArray(body.background_urls)) {
       await replaceHeroBackgrounds(body.background_urls);
       const first = body.background_urls[0] ?? null;
-      await query(`UPDATE hero_section SET background_url = $2 WHERE id = 1`, [1, first]);
+      await query(`UPDATE hero_section SET background_url = $1 WHERE id = 1`, [first]);
     }
 
     const { rows } = await query(
       `UPDATE hero_section SET
-         tagline = COALESCE($2, tagline),
-         title = COALESCE($3, title),
-         subtitle = COALESCE($4, subtitle),
-         cta_primary_label = COALESCE($5, cta_primary_label),
-         cta_primary_href = COALESCE($6, cta_primary_href),
-         cta_secondary_label = COALESCE($7, cta_secondary_label),
-         cta_secondary_href = COALESCE($8, cta_secondary_href),
-         side_label = COALESCE($9, side_label),
-         scroll_label = COALESCE($10, scroll_label),
-         status = COALESCE($11, status)
+         tagline = COALESCE($1, tagline),
+         title = COALESCE($2, title),
+         subtitle = COALESCE($3, subtitle),
+         cta_primary_label = COALESCE($4, cta_primary_label),
+         cta_primary_href = COALESCE($5, cta_primary_href),
+         cta_secondary_label = COALESCE($6, cta_secondary_label),
+         cta_secondary_href = COALESCE($7, cta_secondary_href),
+         side_label = COALESCE($8, side_label),
+         scroll_label = COALESCE($9, scroll_label),
+         status = COALESCE($10, status)
        WHERE id = 1
        RETURNING background_url, tagline, title, subtitle, cta_primary_label, cta_primary_href,
                  cta_secondary_label, cta_secondary_href, side_label, scroll_label, status`,
       [
-        1,
         body.tagline,
         body.title,
         body.subtitle,

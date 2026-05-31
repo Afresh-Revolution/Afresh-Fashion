@@ -6,6 +6,9 @@ import {
   productCarouselPhaseMs,
   resolveProductImageUrls,
 } from "@/lib/product-carousel";
+import type { LightboxState } from "@/components/ImageLightbox";
+import { openLightbox, singleLightboxImage } from "@/lib/lightbox";
+import lightboxStyles from "@/styles/image-lightbox.module.scss";
 import styles from "@/styles/product-carousel.module.scss";
 
 type Props = {
@@ -15,6 +18,7 @@ type Props = {
   imageUrl: string | null;
   imageUrls?: string[];
   resolveSrc: (slug: string, url: string | null, w: number, h: number) => string;
+  onOpenLightbox?: (state: LightboxState) => void;
 };
 
 export default function ProductImageCarousel({
@@ -24,6 +28,7 @@ export default function ProductImageCarousel({
   imageUrl,
   imageUrls,
   resolveSrc,
+  onOpenLightbox,
 }: Props) {
   const sources = useMemo(() => {
     const urls = resolveProductImageUrls(imageUrl, imageUrls);
@@ -54,22 +59,81 @@ export default function ProductImageCarousel({
     };
   }, [productId, sources.length]);
 
+  const rawUrls = resolveProductImageUrls(imageUrl, imageUrls);
+  const openGallery = () => {
+    if (!onOpenLightbox) return;
+    const images = rawUrls.length
+      ? rawUrls.map((url, i) =>
+          singleLightboxImage(slug, url, i === 0 ? name : `${name} view ${i + 1}`),
+        )
+      : [singleLightboxImage(slug, null, name)];
+    onOpenLightbox(openLightbox(images, index)!);
+  };
+
   if (sources.length === 0) {
     return (
       <img
         src={resolveSrc(slug, null, 400, 530)}
         alt={name}
-        className={`product-img ${styles.slide}`}
+        className={`product-img ${styles.slide} ${onOpenLightbox ? lightboxStyles.clickable : ""}`}
+        onClick={onOpenLightbox ? openGallery : undefined}
+        role={onOpenLightbox ? "button" : undefined}
+        tabIndex={onOpenLightbox ? 0 : undefined}
+        onKeyDown={
+          onOpenLightbox
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openGallery();
+                }
+              }
+            : undefined
+        }
       />
     );
   }
 
   if (sources.length === 1) {
-    return <img src={sources[0]} alt={name} className={`product-img ${styles.slide}`} />;
+    return (
+      <img
+        src={sources[0]}
+        alt={name}
+        className={`product-img ${styles.slide} ${onOpenLightbox ? lightboxStyles.clickable : ""}`}
+        onClick={onOpenLightbox ? openGallery : undefined}
+        role={onOpenLightbox ? "button" : undefined}
+        tabIndex={onOpenLightbox ? 0 : undefined}
+        onKeyDown={
+          onOpenLightbox
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openGallery();
+                }
+              }
+            : undefined
+        }
+      />
+    );
   }
 
   return (
-    <div className={`product-carousel ${styles.carousel}`} aria-label={`${name} gallery`}>
+    <div
+      className={`product-carousel ${styles.carousel} ${onOpenLightbox ? lightboxStyles.clickable : ""}`}
+      aria-label={`${name} gallery`}
+      onClick={onOpenLightbox ? openGallery : undefined}
+      onKeyDown={
+        onOpenLightbox
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openGallery();
+              }
+            }
+          : undefined
+      }
+      role={onOpenLightbox ? "button" : undefined}
+      tabIndex={onOpenLightbox ? 0 : undefined}
+    >
       {sources.map((src, i) => (
         <img
           key={`${src}-${i}`}
@@ -77,6 +141,7 @@ export default function ProductImageCarousel({
           alt={i === 0 ? name : `${name} view ${i + 1}`}
           className={`product-img ${styles.slide} ${i === index ? styles.slideActive : ""}`}
           aria-hidden={i !== index}
+          draggable={false}
         />
       ))}
       <div className={styles.dots} aria-hidden="true">

@@ -1208,7 +1208,13 @@ export function AboutPanel({ notify }: { notify: Notify }) {
 
       <div className={styles.panel}>
         <div className={styles.panelHeaderRow}>
-          <p className={styles.panelTitle}>Stats row</p>
+          <div>
+            <p className={styles.panelTitle}>Impact stats (#about)</p>
+            <p className={styles.panelHint}>
+              The gold numbers row below the manifesto — e.g. Countries Reached, Collections Dropped, Global
+              Collaborators, Cultural Impact (∞).
+            </p>
+          </div>
           <button type="button" className={styles.btnGhost} onClick={() => void addStat()}>
             Add stat
           </button>

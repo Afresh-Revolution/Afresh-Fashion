@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import {
@@ -29,6 +29,10 @@ import {
 } from "lucide-react";
 import FashionMenuToggle from "@/components/FashionMenuToggle";
 import ProductImageCarousel from "@/components/ProductImageCarousel";
+import ImageLightbox from "@/components/ImageLightbox";
+import type { LightboxState } from "@/components/ImageLightbox";
+import { LightboxImage } from "@/components/LightboxImage";
+import { createClickGuard } from "@/lib/lightbox";
 import styles from "@/styles/home.module.scss";
 import { useAfreshSite } from "@/hooks/useAfreshSite";
 import { useCart } from "@/hooks/useCart";
@@ -103,6 +107,9 @@ export default function AfreshPage() {
   const [videoIndex, setVideoIndex] = useState(0);
   const [filmOpen, setFilmOpen] = useState(false);
   const [helpPage, setHelpPage] = useState<HelpPage | null>(null);
+  const [lightbox, setLightbox] = useState<LightboxState>(null);
+  const lookbookClickGuard = useMemo(() => createClickGuard(), []);
+  const openLightbox = (state: LightboxState) => setLightbox(state);
 
   const helpBySlug = Object.fromEntries(content.helpPages.map((p) => [p.slug, p]));
   const publicContactEmail =
@@ -316,7 +323,7 @@ export default function AfreshPage() {
       </div>
 
       {content.hero && (
-        <HeroSection hero={content.hero} onNavigate={site.scrollTo} />
+        <HeroSection hero={content.hero} onNavigate={site.scrollTo} onOpenLightbox={openLightbox} />
       )}
 
       {primaryMarquee && <Marquee items={primaryMarquee.items} />}
@@ -423,9 +430,13 @@ export default function AfreshPage() {
                   key={c.id}
                   className={`img-zoom reveal-scale ${styles.collectionCard}`}
                 >
-                  <img
-                    src={resolveImage(c.slug || c.id, c.image_url, 600, 800)}
+                  <LightboxImage
+                    seed={c.slug || c.id}
+                    url={c.image_url}
                     alt={c.title}
+                    width={600}
+                    height={800}
+                    onOpen={openLightbox}
                   />
                   <div className={styles.collectionOverlay} />
                   <div className={styles.collectionContent}>
@@ -479,9 +490,14 @@ export default function AfreshPage() {
             {content.lookbook.map((l) => (
               <div key={l.id} className={styles.lookItem}>
                 <div className={styles.lookImageWrap}>
-                  <img
-                    src={resolveImage(l.id, l.image_url, 360, 480)}
+                  <LightboxImage
+                    seed={l.id}
+                    url={l.image_url}
                     alt={l.label}
+                    width={360}
+                    height={480}
+                    onOpen={openLightbox}
+                    clickGuard={lookbookClickGuard}
                   />
                   <span className={styles.lookLabel}>{l.label}</span>
                 </div>
@@ -504,14 +520,13 @@ export default function AfreshPage() {
               onEnded={nextFilm}
             />
           ) : (
-            <img
-              src={resolveImage(
-                "afresh-cinematic",
-                cinematic?.image_url ?? videos[0]?.poster_url,
-                1920,
-                900,
-              )}
+            <LightboxImage
+              seed="afresh-cinematic"
+              url={cinematic?.image_url ?? videos[0]?.poster_url}
               alt="Cinematic Break"
+              width={1920}
+              height={900}
+              onOpen={openLightbox}
             />
           )}
           {!filmOpen && cinematic && (
@@ -594,6 +609,7 @@ export default function AfreshPage() {
                         imageUrl={p.image_url}
                         imageUrls={p.image_urls}
                         resolveSrc={resolveImage}
+                        onOpenLightbox={openLightbox}
                       />
                       <div
                         className={`product-overlay ${styles.productOverlay}`}
@@ -664,14 +680,13 @@ export default function AfreshPage() {
           className={`${styles.section} ${styles.bgGraphite} ${styles.drops}`}
         >
           <div className={styles.dropsBg}>
-            <img
-              src={resolveImage(
-                "afresh-drop-bg",
-                content.drop.background_url,
-                1920,
-                1080,
-              )}
+            <LightboxImage
+              seed="afresh-drop-bg"
+              url={content.drop.background_url}
               alt=""
+              width={1920}
+              height={1080}
+              onOpen={openLightbox}
             />
           </div>
           <div className={styles.dropsContent}>
@@ -755,14 +770,13 @@ export default function AfreshPage() {
                   key={c.id}
                   className={`reveal-scale ${styles.communityItem} ${c.is_large_tile ? styles.communityFeatured : ""}`}
                 >
-                  <img
-                    src={resolveImage(
-                      c.id,
-                      c.image_url,
-                      c.is_large_tile ? 800 : 400,
-                      c.is_large_tile ? 800 : 400,
-                    )}
+                  <LightboxImage
+                    seed={c.id}
+                    url={c.image_url}
                     alt="Community"
+                    width={c.is_large_tile ? 800 : 400}
+                    height={c.is_large_tile ? 800 : 400}
+                    onOpen={openLightbox}
                   />
                   <div className={styles.communityHandle}>
                     <p>{c.handle}</p>
@@ -780,9 +794,13 @@ export default function AfreshPage() {
                       className={`${styles.collabItem} ${c.is_wide_tile ? styles.collabSpan2 : ""}`}
                     >
                       <div className={styles.collabAvatar}>
-                        <img
-                          src={resolveImage(c.id, c.avatar_url, 100, 100)}
+                        <LightboxImage
+                          seed={c.id}
+                          url={c.avatar_url}
                           alt={c.name}
+                          width={100}
+                          height={100}
+                          onOpen={openLightbox}
                         />
                       </div>
                       <p>{c.name}</p>
@@ -829,14 +847,13 @@ export default function AfreshPage() {
                   <div
                     className={`${styles.articleCard} ${styles.articleFeaturedWrap}`}
                   >
-                    <img
-                      src={resolveImage(
-                        featuredEditorial[0].id,
-                        featuredEditorial[0].image_url,
-                        800,
-                        500,
-                      )}
+                    <LightboxImage
+                      seed={featuredEditorial[0].id}
+                      url={featuredEditorial[0].image_url}
                       alt="Editorial"
+                      width={800}
+                      height={500}
+                      onOpen={openLightbox}
                     />
                     <div className={styles.articleOverlay} />
                     <div className={styles.articleContent}>
@@ -869,9 +886,13 @@ export default function AfreshPage() {
                   <div
                     className={`${styles.articleCard} ${styles.articleSmallWrap}`}
                   >
-                    <img
-                      src={resolveImage(a.id, a.image_url, 400, 300)}
+                    <LightboxImage
+                      seed={a.id}
+                      url={a.image_url}
                       alt="Editorial"
+                      width={400}
+                      height={300}
+                      onOpen={openLightbox}
                     />
                     <div className={styles.articleOverlay} />
                     <div className={styles.articleContent}>
@@ -889,7 +910,14 @@ export default function AfreshPage() {
             <div className={styles.moreArticles}>
               {miniEditorial.map((a) => (
                 <div key={a.id} className={`${styles.miniArticle} reveal`}>
-                  <img src={resolveImage(a.id, a.image_url, 100, 100)} alt="" />
+                  <LightboxImage
+                    seed={a.id}
+                    url={a.image_url}
+                    alt=""
+                    width={100}
+                    height={100}
+                    onOpen={openLightbox}
+                  />
                   <div>
                     <span className={styles.articleTag}>{a.tag}</span>
                     <h4>{a.title}</h4>
@@ -908,14 +936,13 @@ export default function AfreshPage() {
           className={`${styles.section} ${styles.bgMatte} ${styles.membership}`}
         >
           <div className={styles.membershipBg}>
-            <img
-              src={resolveImage(
-                "afresh-member",
-                content.membership.background_url,
-                1920,
-                1080,
-              )}
+            <LightboxImage
+              seed="afresh-member"
+              url={content.membership.background_url}
               alt=""
+              width={1920}
+              height={1080}
+              onOpen={openLightbox}
             />
           </div>
           <div className={styles.membershipGradient} />
@@ -1163,6 +1190,7 @@ export default function AfreshPage() {
         onShopMore={() => site.scrollTo("#shop")}
       />
       <HelpPageModal page={helpPage} onClose={() => setHelpPage(null)} />
+      <ImageLightbox state={lightbox} onClose={() => setLightbox(null)} />
     </>
   );
 }

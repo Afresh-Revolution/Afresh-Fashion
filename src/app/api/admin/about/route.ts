@@ -32,20 +32,19 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { rows } = await query(
       `UPDATE about_section SET
-         section_label = COALESCE($2, section_label),
-         heading_line_1 = COALESCE($3, heading_line_1),
-         heading_line_2 = COALESCE($4, heading_line_2),
-         lead_paragraph = COALESCE($5, lead_paragraph),
-         body_paragraph_1 = COALESCE($6, body_paragraph_1),
-         body_paragraph_2 = COALESCE($7, body_paragraph_2),
-         cta_label = COALESCE($8, cta_label),
-         cta_href = COALESCE($9, cta_href),
-         status = COALESCE($10, status)
+         section_label = COALESCE($1, section_label),
+         heading_line_1 = COALESCE($2, heading_line_1),
+         heading_line_2 = COALESCE($3, heading_line_2),
+         lead_paragraph = COALESCE($4, lead_paragraph),
+         body_paragraph_1 = COALESCE($5, body_paragraph_1),
+         body_paragraph_2 = COALESCE($6, body_paragraph_2),
+         cta_label = COALESCE($7, cta_label),
+         cta_href = COALESCE($8, cta_href),
+         status = COALESCE($9, status)
        WHERE id = 1
        RETURNING section_label, heading_line_1, heading_line_2, lead_paragraph, body_paragraph_1,
                  body_paragraph_2, cta_label, cta_href, status`,
       [
-        1,
         body.section_label,
         body.heading_line_1,
         body.heading_line_2,

@@ -1,0 +1,130 @@
+@use "variables" as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba($matte, 0.94);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: lightboxFadeIn 0.25s ease;
+}
+
+@keyframes lightboxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 3;
+  background: rgba($graphite, 0.85);
+  border: 1px solid rgba($silver, 0.3);
+  color: $offwhite;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+
+  &:hover {
+    border-color: rgba($gold, 0.5);
+    color: $gold;
+  }
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: min(96vw, 1400px);
+  height: min(88vh, 900px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image {
+  max-width: 100%;
+  max-height: min(88vh, 900px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  animation: lightboxImageIn 0.3s ease;
+}
+
+@keyframes lightboxImageIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  background: rgba($graphite, 0.75);
+  border: 1px solid rgba($silver, 0.25);
+  color: $offwhite;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+
+  &:hover {
+    border-color: rgba($gold, 0.45);
+    color: $gold;
+    background: rgba($graphite, 0.92);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.navPrev {
+  left: 0.5rem;
+}
+
+.navNext {
+  right: 0.5rem;
+}
+
+.counter {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba($silver, 0.85);
+  background: rgba($graphite, 0.7);
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba($silver, 0.15);
+}
+
+.clickable {
+  cursor: zoom-in;
+}
