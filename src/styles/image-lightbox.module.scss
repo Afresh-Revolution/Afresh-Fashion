@@ -10,6 +10,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  cursor: zoom-out;
   animation: lightboxFadeIn 0.25s ease;
 }
 
@@ -23,10 +24,11 @@
 }
 
 .close {
-  position: absolute;
-  top: 1rem;
+  position: fixed;
+  top: calc(1rem + 15px);
   right: 1rem;
-  z-index: 3;
+  z-index: 10;
+  pointer-events: auto;
   background: rgba($graphite, 0.85);
   border: 1px solid rgba($silver, 0.3);
   color: $offwhite;
@@ -52,6 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: zoom-out;
 }
 
 .image {
@@ -61,6 +64,7 @@
   height: auto;
   object-fit: contain;
   user-select: none;
+  cursor: default;
   animation: lightboxImageIn 0.3s ease;
 }
 
