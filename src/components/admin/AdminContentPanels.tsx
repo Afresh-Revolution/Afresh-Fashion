@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import MediaUpload from "@/components/admin/MediaUpload";
+import {
+  AdminHeroSkeleton,
+  AdminOrdersSkeleton,
+  AdminPanelSkeleton,
+} from "@/components/admin/AdminSkeleton";
 import type {
   AboutSection,
   CinematicSection,
@@ -157,7 +162,7 @@ export function CollectionsPanel({ notify }: { notify: Notify }) {
     await save({ ...item, status });
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   return (
     <div className={styles.contentPanel}>
@@ -260,7 +265,7 @@ export function LookbookPanel({ notify }: { notify: Notify }) {
     notify("Look saved");
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   return (
     <div className={styles.contentPanel}>
@@ -370,7 +375,7 @@ export function ShopPanel({ notify }: { notify: Notify }) {
     notify("Product saved");
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   return (
     <div className={styles.contentPanel}>
@@ -564,7 +569,7 @@ export function CommunityPanel({ notify }: { notify: Notify }) {
     notify("Post saved");
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   return (
     <div className={styles.contentPanel}>
@@ -670,7 +675,7 @@ export function CollaboratorsPanel({ notify }: { notify: Notify }) {
     notify("Collaborator saved");
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   return (
     <div className={styles.contentPanel}>
@@ -778,7 +783,7 @@ export function EditorialPanel({ notify }: { notify: Notify }) {
     notify("Article saved");
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   return (
     <div className={styles.contentPanel}>
@@ -940,7 +945,7 @@ export function CinematicPanel({ notify }: { notify: Notify }) {
     }
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   const current = videos[activeVideo];
 
@@ -1130,7 +1135,7 @@ export function AboutPanel({ notify }: { notify: Notify }) {
     notify("Stat added");
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
   if (!section) return <p className={styles.empty}>About section not found in database.</p>;
 
   return (
@@ -1369,7 +1374,7 @@ export function DropPanel({ notify }: { notify: Notify }) {
     });
   };
 
-  if (loading) return <p className={styles.empty}>Loading…</p>;
+  if (loading) return <AdminPanelSkeleton />;
 
   if (!drop) {
     return (
@@ -1494,7 +1499,7 @@ export function HeroPanel({ notify }: { notify: Notify }) {
     notify("Hero saved — slideshow updates on the site");
   };
 
-  if (loading) return <p className={styles.empty}>Loading hero…</p>;
+  if (loading) return <AdminHeroSkeleton />;
   if (!hero) return <p className={styles.empty}>Hero section not found in database.</p>;
 
   const urls = hero.background_urls ?? [];
@@ -1703,7 +1708,7 @@ export function HelpPanel({ notify }: { notify: Notify }) {
     notify(`${page.title} saved`);
   };
 
-  if (loading) return <p className={styles.empty}>Loading help pages…</p>;
+  if (loading) return <AdminPanelSkeleton cards={2} />;
 
   return (
     <div className={styles.contentPanel}>
@@ -1886,7 +1891,7 @@ export function OrdersPanel({ notify }: { notify: Notify }) {
     void load();
   };
 
-  if (loading) return <p className={styles.empty}>Loading orders…</p>;
+  if (loading) return <AdminOrdersSkeleton />;
 
   return (
     <div className={styles.contentPanel}>

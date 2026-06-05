@@ -40,6 +40,7 @@ import CheckoutDrawer from "@/components/CheckoutDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import HeroSection from "@/components/HeroSection";
 import HelpPageModal from "@/components/HelpPageModal";
+import AfreshPageSkeleton from "@/components/AfreshPageSkeleton";
 import { footerLabelToHelpSlug, isHelpFooterGroup } from "@/lib/help-pages";
 import type { HelpPage } from "@/types/content";
 
@@ -99,8 +100,8 @@ function NavLink({
 }
 
 export default function AfreshPage() {
-  const { content } = useSiteContent();
-  const site = useAfreshSite(content.drop?.drop_at ?? null);
+  const { content, loaded } = useSiteContent();
+  const site = useAfreshSite(content.drop?.drop_at ?? null, loaded);
   const cart = useCart(site.showToast);
   const currency = content.settings?.currency_symbol ?? "₦";
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -322,6 +323,10 @@ export default function AfreshPage() {
         </div>
       </div>
 
+      {!loaded ? (
+        <AfreshPageSkeleton />
+      ) : (
+        <>
       {content.hero && (
         <HeroSection hero={content.hero} onNavigate={site.scrollTo} onOpenLightbox={openLightbox} />
       )}
@@ -1084,7 +1089,7 @@ export default function AfreshPage() {
       )}
 
       {content.footer && (
-        <footer className={styles.footer}>
+        <footer className={styles.footer} id="footer">
           <div className={styles.container}>
             <div className={styles.footerGrid}>
               <div className={styles.footerBrand}>
@@ -1175,6 +1180,8 @@ export default function AfreshPage() {
             </div>
           </div>
         </footer>
+      )}
+        </>
       )}
 
       <SearchOverlay

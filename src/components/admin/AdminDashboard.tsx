@@ -20,6 +20,7 @@ import {
   LookbookPanel,
   ShopPanel,
 } from "@/components/admin/AdminContentPanels";
+import { AdminStatsSkeleton } from "@/components/admin/AdminSkeleton";
 import styles from "@/styles/admin.module.scss";
 
 type OverviewStats = {
@@ -202,22 +203,28 @@ export default function AdminDashboard() {
             <h1 className={styles.pageTitle}>OVERVIEW</h1>
             <p className={styles.pageDesc}>Studio dashboard — collections, drops, and community at a glance.</p>
             <div className={styles.statsGrid}>
-              <div className={styles.statCard}>
-                <p>{overviewLoading ? "—" : overview.publishedProducts}</p>
-                <p>Live Products</p>
-              </div>
-              <div className={styles.statCard}>
-                <p>{overviewLoading ? "—" : overview.totalStock}</p>
-                <p>Total Stock</p>
-              </div>
-              <div className={styles.statCard}>
-                <p>{overviewLoading ? "—" : overview.unreadAlerts}</p>
-                <p>Unread alerts</p>
-              </div>
-              <div className={styles.statCard}>
-                <p>{overviewLoading ? "—" : overview.pendingOrders}</p>
-                <p>Pending orders</p>
-              </div>
+              {overviewLoading ? (
+                <AdminStatsSkeleton />
+              ) : (
+                <>
+                  <div className={styles.statCard}>
+                    <p>{overview.publishedProducts}</p>
+                    <p>Live Products</p>
+                  </div>
+                  <div className={styles.statCard}>
+                    <p>{overview.totalStock}</p>
+                    <p>Total Stock</p>
+                  </div>
+                  <div className={styles.statCard}>
+                    <p>{overview.unreadAlerts}</p>
+                    <p>Unread alerts</p>
+                  </div>
+                  <div className={styles.statCard}>
+                    <p>{overview.pendingOrders}</p>
+                    <p>Pending orders</p>
+                  </div>
+                </>
+              )}
             </div>
             {unreadNotifs > 0 && (
               <div className={styles.panel}>

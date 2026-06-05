@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { formatNaira, resolveImage } from "@/hooks/useSiteContent";
+import { Skeleton } from "@/components/Skeleton";
+import sk from "@/styles/skeleton.module.scss";
 import styles from "@/styles/checkout.module.scss";
 
 type Hit = {
@@ -77,7 +79,20 @@ export default function SearchOverlay({ open, onClose, onSelect, currency = "₦
           placeholder="Search the shop…"
           autoFocus
         />
-        {loading && <p style={{ color: "#BFC0C0", fontSize: "0.875rem" }}>Searching…</p>}
+        {loading && (
+          <div aria-hidden>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className={sk.searchHitSkeleton}>
+                <Skeleton className={sk.searchHitImage} />
+                <div className={sk.searchHitText}>
+                  <Skeleton style={{ width: "60%", height: "0.875rem" }} />
+                  <Skeleton style={{ width: "40%", height: "0.625rem" }} />
+                </div>
+                <Skeleton style={{ width: "3rem", height: "0.8125rem" }} />
+              </div>
+            ))}
+          </div>
+        )}
         {!loading && q.length >= 2 && results.length === 0 && (
           <p style={{ color: "#BFC0C0", fontSize: "0.875rem" }}>No pieces found.</p>
         )}

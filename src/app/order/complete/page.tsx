@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Skeleton } from "@/components/Skeleton";
+import sk from "@/styles/skeleton.module.scss";
 
 function CompleteInner() {
   const params = useSearchParams();
@@ -47,7 +49,13 @@ function CompleteInner() {
         textAlign: "center",
       }}
     >
-      {status === "loading" && <p>Confirming your payment…</p>}
+      {status === "loading" && (
+        <div className={sk.orderCompleteSkeleton} aria-busy="true" aria-label="Confirming payment">
+          <Skeleton style={{ width: "8rem", height: "2rem" }} />
+          <Skeleton style={{ width: "100%", height: "0.875rem" }} />
+          <Skeleton style={{ width: "75%", height: "0.875rem" }} />
+        </div>
+      )}
       {status === "ok" && (
         <>
           <h1 style={{ fontFamily: "var(--font-heading)", letterSpacing: "0.1em", marginBottom: "1rem" }}>

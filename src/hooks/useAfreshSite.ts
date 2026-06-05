@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-export function useAfreshSite(dropAt?: string | null) {
+export function useAfreshSite(dropAt?: string | null, contentLoaded = false) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
@@ -14,6 +14,7 @@ export function useAfreshSite(dropAt?: string | null) {
   const [memberEmail, setMemberEmail] = useState("");
   const dropDateRef = useRef<Date | null>(null);
   const animationsReady = useRef(false);
+  const preloaderDone = useRef(false);
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -64,7 +65,105 @@ export function useAfreshSite(dropAt?: string | null) {
     closeMenu();
   }, [closeMenu]);
 
-  // Preloader + GSAP init
+  const runContentAnimations = useCallback(() => {
+    if (animationsReady.current || !preloaderDone.current || !contentLoaded) return;
+    animationsReady.current = true;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    gsap.to(".hero-title-char", {
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      stagger: 0.055,
+      duration: 1.15,
+      ease: "power4.out",
+      delay: 0.15,
+    });
+    gsap.to(".hero-fade", {
+      opacity: 1,
+      y: 0,
+      duration: 0.95,
+      stagger: 0.14,
+      delay: 0.65,
+      ease: "power3.out",
+    });
+
+    gsap.to("#hero", {
+      scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: true },
+      y: 150,
+      opacity: 0.3,
+    });
+
+    gsap.utils.toArray<HTMLElement>(".reveal").forEach((el) => {
+      gsap.to(el, {
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
+      });
+    });
+
+    gsap.utils.toArray<HTMLElement>(".reveal-left").forEach((el) => {
+      gsap.to(el, {
+        opacity: 1,
+        x: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
+      });
+    });
+
+    gsap.utils.toArray<HTMLElement>(".reveal-right").forEach((el) => {
+      gsap.to(el, {
+        opacity: 1,
+        x: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
+      });
+    });
+
+    gsap.utils.toArray<HTMLElement>(".reveal-scale").forEach((el) => {
+      gsap.to(el, {
+        opacity: 1,
+        scale: 1,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
+      });
+    });
+
+    gsap.utils.toArray<HTMLElement>(".counter").forEach((counter) => {
+      const target = parseInt(counter.dataset.target || "0", 10);
+      const obj = { val: 0 };
+      gsap.to(obj, {
+        val: target,
+        duration: 2,
+        ease: "power2.out",
+        scrollTrigger: { trigger: counter, start: "top 85%" },
+        onUpdate: () => {
+          counter.textContent = String(Math.round(obj.val));
+        },
+      });
+    });
+
+    document.querySelectorAll("#collections .img-zoom").forEach((card) => {
+      const img = card.querySelector("img");
+      if (img) {
+        gsap.to(img, {
+          y: -30,
+          scrollTrigger: { trigger: card, start: "top bottom", end: "bottom top", scrub: true },
+        });
+      }
+    });
+  }, [contentLoaded]);
+
+  const runContentAnimationsRef = useRef(runContentAnimations);
+  runContentAnimationsRef.current = runContentAnimations;
+
+  // Preloader
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
@@ -73,101 +172,9 @@ export function useAfreshSite(dropAt?: string | null) {
     const preloaderFashion = document.querySelector(".preloader-fashion");
     const preloaderLine = document.querySelector(".preloader-line");
 
-    const initAnimations = () => {
-      if (animationsReady.current) return;
-      animationsReady.current = true;
-
-      gsap.to(".hero-title-char", {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        stagger: 0.055,
-        duration: 1.15,
-        ease: "power4.out",
-        delay: 0.15,
-      });
-      gsap.to(".hero-fade", {
-        opacity: 1,
-        y: 0,
-        duration: 0.95,
-        stagger: 0.14,
-        delay: 0.65,
-        ease: "power3.out",
-      });
-
-      gsap.to("#hero", {
-        scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: true },
-        y: 150,
-        opacity: 0.3,
-      });
-
-      gsap.utils.toArray<HTMLElement>(".reveal").forEach((el) => {
-        gsap.to(el, {
-          opacity: 1,
-          y: 0,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
-        });
-      });
-
-      gsap.utils.toArray<HTMLElement>(".reveal-left").forEach((el) => {
-        gsap.to(el, {
-          opacity: 1,
-          x: 0,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
-        });
-      });
-
-      gsap.utils.toArray<HTMLElement>(".reveal-right").forEach((el) => {
-        gsap.to(el, {
-          opacity: 1,
-          x: 0,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
-        });
-      });
-
-      gsap.utils.toArray<HTMLElement>(".reveal-scale").forEach((el) => {
-        gsap.to(el, {
-          opacity: 1,
-          scale: 1,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none none" },
-        });
-      });
-
-      gsap.utils.toArray<HTMLElement>(".counter").forEach((counter) => {
-        const target = parseInt(counter.dataset.target || "0", 10);
-        const obj = { val: 0 };
-        gsap.to(obj, {
-          val: target,
-          duration: 2,
-          ease: "power2.out",
-          scrollTrigger: { trigger: counter, start: "top 85%" },
-          onUpdate: () => {
-            counter.textContent = String(Math.round(obj.val));
-          },
-        });
-      });
-
-      document.querySelectorAll("#collections .img-zoom").forEach((card) => {
-        const img = card.querySelector("img");
-        if (img) {
-          gsap.to(img, {
-            y: -30,
-            scrollTrigger: { trigger: card, start: "top bottom", end: "bottom top", scrub: true },
-          });
-        }
-      });
-    };
-
     const tl = gsap.timeline({
       onComplete: () => {
+        preloaderDone.current = true;
         if (preloader) {
           gsap.to(preloader, {
             opacity: 0,
@@ -175,11 +182,11 @@ export function useAfreshSite(dropAt?: string | null) {
             ease: "power2.inOut",
             onComplete: () => {
               preloader.style.display = "none";
-              initAnimations();
+              runContentAnimationsRef.current();
             },
           });
         } else {
-          initAnimations();
+          runContentAnimationsRef.current();
         }
       },
     });
@@ -197,6 +204,10 @@ export function useAfreshSite(dropAt?: string | null) {
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);
+
+  useEffect(() => {
+    runContentAnimations();
+  }, [runContentAnimations]);
 
   // Custom cursor
   useEffect(() => {
@@ -303,7 +314,7 @@ export function useAfreshSite(dropAt?: string | null) {
       tweens.forEach((t) => t.kill());
       particleContainer.innerHTML = "";
     };
-  }, []);
+  }, [contentLoaded]);
 
   // Countdown (from active drop in database)
   useEffect(() => {
@@ -353,7 +364,7 @@ export function useAfreshSite(dropAt?: string | null) {
         });
       }
     });
-  }, [activeFilter]);
+  }, [activeFilter, contentLoaded]);
 
   // Lookbook drag scroll
   useEffect(() => {
@@ -388,7 +399,7 @@ export function useAfreshSite(dropAt?: string | null) {
       el.removeEventListener("mouseup", onUp);
       el.removeEventListener("mousemove", onMove);
     };
-  }, []);
+  }, [contentLoaded]);
 
   return {
     menuOpen,

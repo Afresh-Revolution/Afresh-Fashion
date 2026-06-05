@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { vipSubscriptionEmail } from "@/lib/emails/templates";
 import styles from "@/styles/admin.module.scss";
+import { AdminVipSkeleton } from "@/components/admin/AdminSkeleton";
 
 type Notify = (msg: string) => void;
 
@@ -127,7 +128,7 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
     footerNote: campaign.footer_note || undefined,
   }).html;
 
-  if (loading) return <p className={styles.empty}>Loading VIP data…</p>;
+  if (loading) return <AdminVipSkeleton />;
 
   return (
     <div className={styles.vipPanel}>
