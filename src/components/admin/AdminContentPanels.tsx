@@ -7,6 +7,7 @@ import {
   AdminOrdersSkeleton,
   AdminPanelSkeleton,
 } from "@/components/admin/AdminSkeleton";
+import { useConfirm } from "@/components/ConfirmProvider";
 import type {
   AboutSection,
   CinematicSection,
@@ -1846,6 +1847,7 @@ type OrderRow = {
 };
 
 export function OrdersPanel({ notify }: { notify: Notify }) {
+  const confirmAction = useConfirm();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<import("@/types/cart").OrderSummary | null>(null);
@@ -1875,8 +1877,18 @@ export function OrdersPanel({ notify }: { notify: Notify }) {
     setDeliveryMsg("");
   };
 
-  const confirm = async () => {
-    if (!selected) return;
+  const submitOrder = async () => {
+    if (!selected || !detail) return;
+    if (
+      !(await confirmAction({
+        title: "Confirm order",
+        message: `Confirm payment for order ${detail.order_number} and email delivery details to ${detail.email}?`,
+        confirmLabel: "Confirm & email",
+        cancelLabel: "Not yet",
+      }))
+    ) {
+      return;
+    }
     await api(`/api/admin/orders/${selected}`, {
       method: "PATCH",
       body: JSON.stringify({
@@ -1965,7 +1977,7 @@ export function OrdersPanel({ notify }: { notify: Notify }) {
             </div>
           </div>
           <div className={styles.actions}>
-            <button type="button" className={styles.btnPrimary} onClick={() => void confirm()}>
+            <button type="button" className={styles.btnPrimary} onClick={() => void submitOrder()}>
               Confirm &amp; email customer
             </button>
             <button type="button" className={styles.btnGhost} onClick={() => setSelected(null)}>

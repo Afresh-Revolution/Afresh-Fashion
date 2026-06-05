@@ -25,7 +25,7 @@ export function vipWelcomeEmail(opts: { siteUrl?: string }) {
     </ul>
     ${ctaButton("Explore the shop", shopUrl)}
     <p style="font-size:12px;color:#888;text-align:center;margin-top:24px;">
-      Free to join · No spam · Unsubscribe anytime
+      Free to join · No spam · Paid members may cancel anytime by replying to this email · All membership fees are non-refundable
     </p>
   `;
   return {
@@ -39,7 +39,7 @@ export function adminVipSignupEmail(opts: { memberEmail: string; siteUrl?: strin
   const body = `
     <h1 style="margin:0 0 12px;font-size:18px;color:#C8A96B;">New VIP signup</h1>
     <p style="color:#BFC0C0;margin:0 0 8px;"><strong style="color:#F5F5F5;">${opts.memberEmail}</strong> joined the Inner Circle on your landing page.</p>
-    <p style="color:#888;font-size:13px;margin:0 0 20px;">A welcome email was sent automatically via Resend.</p>
+    <p style="color:#888;font-size:13px;margin:0 0 20px;">A welcome email was sent automatically</p>
     ${ctaButton("Open admin panel", adminUrl)}
   `;
   return {
@@ -91,4 +91,28 @@ export function vipSubscriptionEmail(content: SubscriptionEmailContent) {
   `;
 
   return { html: emailLayout(body) };
+}
+
+export function vipMembershipCancellationEmail(opts: { reason: string; siteUrl?: string }) {
+  const contactUrl = `${opts.siteUrl || ""}/#contact`;
+  const body = `
+    <h1 style="margin:0 0 16px;font-size:22px;font-weight:400;color:#F5F5F5;text-align:center;">
+      Membership cancelled
+    </h1>
+    <p style="color:#BFC0C0;margin:0 0 16px;">
+      Your AFRESH Inner Circle membership has been cancelled. You will no longer receive VIP access, early drops, or member communications.
+    </p>
+    <div style="margin:20px 0;padding:16px 20px;background:rgba(200,169,107,0.08);border-left:3px solid #C8A96B;">
+      <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#C8A96B;">Reason</p>
+      <p style="margin:0;color:#BFC0C0;white-space:pre-line;">${esc(opts.reason)}</p>
+    </div>
+    <p style="color:#888;font-size:13px;margin:0 0 16px;">
+      If you paid for membership, please note that all membership fees are non-refundable. You may reply to this email if you have questions about your cancellation.
+    </p>
+    ${ctaButton("Visit AFRESH", opts.siteUrl || contactUrl)}
+  `;
+  return {
+    subject: "Your AFRESH Inner Circle membership has been cancelled",
+    html: emailLayout(body),
+  };
 }

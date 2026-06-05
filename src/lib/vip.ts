@@ -1,6 +1,7 @@
 import { query } from "@/lib/db";
 import {
   adminVipSignupEmail,
+  vipMembershipCancellationEmail,
   vipWelcomeEmail,
   vipSubscriptionEmail,
   type SubscriptionEmailContent,
@@ -151,4 +152,73 @@ export async function sendSubscriptionCampaign(
   });
 
   return { sent, total: members.rows.length };
+}
+
+export async function cancelVipMember(id: string, reason: string, request?: Request) {
+  const member = await query<{
+    id: string;
+    email: string;
+    is_active: boolean;
+    unsubscribed_at: string | null;
+  }>(`SELECT id, email, is_active, unsubscribed_at FROM vip_members WHERE id = $1`, [id]);
+
+  const row = member.rows[0];
+  if (!row) {
+    throw new Error("VIP member not found");
+  }
+  if (!row.is_active || row.unsubscribed_at) {
+    throw new Error("This membership is already cancelled");
+  }
+
+  await query(
+    `UPDATE vip_members
+     SET is_active = FALSE, unsubscribed_at = NOW()
+     WHERE id = $1`,
+    [id]
+  );
+
+  const siteUrl = getSiteUrl(request);
+  const mail = vipMembershipCancellationEmail({ reason, siteUrl });
+  await sendEmail({
+    to: row.email,
+    subject: mail.subject,
+    html: mail.html,
+  });
+
+  await createAdminNotification({
+    type: "vip_cancelled",
+    title: "VIP membership cancelled",
+    message: `${row.email} was removed from the Inner Circle.`,
+    metadata: { email: row.email, reason },
+  });
+
+  return { email: row.email, cancelled: true };
+}
+
+export async function removeVipMember(id: string) {
+  const member = await query<{
+    id: string;
+    email: string;
+    is_active: boolean;
+    unsubscribed_at: string | null;
+  }>(`SELECT id, email, is_active, unsubscribed_at FROM vip_members WHERE id = $1`, [id]);
+
+  const row = member.rows[0];
+  if (!row) {
+    throw new Error("VIP member not found");
+  }
+  if (row.is_active) {
+    throw new Error("Cancel the membership before removing this record");
+  }
+
+  await query(`DELETE FROM vip_members WHERE id = $1`, [id]);
+
+  await createAdminNotification({
+    type: "vip_removed",
+    title: "VIP record removed",
+    message: `${row.email} was permanently deleted from the system.`,
+    metadata: { email: row.email },
+  });
+
+  return { email: row.email, removed: true };
 }

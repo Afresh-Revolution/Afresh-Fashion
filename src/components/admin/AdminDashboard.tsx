@@ -21,6 +21,7 @@ import {
   ShopPanel,
 } from "@/components/admin/AdminContentPanels";
 import { AdminStatsSkeleton } from "@/components/admin/AdminSkeleton";
+import { ConfirmProvider } from "@/components/ConfirmProvider";
 import styles from "@/styles/admin.module.scss";
 
 type OverviewStats = {
@@ -138,6 +139,7 @@ export default function AdminDashboard() {
   };
 
   return (
+    <ConfirmProvider>
     <div className={styles.admin}>
       <div
         className={`${styles.sidebarBackdrop} ${sidebarOpen ? styles.sidebarBackdropVisible : ""}`}
@@ -349,7 +351,7 @@ export default function AdminDashboard() {
           <>
             <h1 className={styles.pageTitle}>VIP MEMBERS</h1>
             <p className={styles.pageDesc}>
-              Signups via Resend welcome email · admin alerts · subscription campaigns to all VIPs.
+              Signups welcome email · admin alerts · subscription campaigns to all VIPs.
             </p>
             <AdminVipPanel
               notify={(msg) => {
@@ -397,5 +399,6 @@ export default function AdminDashboard() {
 
       <div className={`${styles.toast} ${toast ? styles.visible : ""}`}>{toast}</div>
     </div>
+    </ConfirmProvider>
   );
 }

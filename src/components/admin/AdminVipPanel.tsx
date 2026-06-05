@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { vipSubscriptionEmail } from "@/lib/emails/templates";
+import { useConfirm } from "@/components/ConfirmProvider";
 import styles from "@/styles/admin.module.scss";
 import { AdminVipSkeleton } from "@/components/admin/AdminSkeleton";
 
@@ -47,7 +48,7 @@ const DEFAULT_CAMPAIGN: CampaignForm = {
   perks: "✦ 24hr early access before public release\n✦ Invite-only pricing on select pieces\n✦ Free shipping on orders over ₦150,000",
   cta_label: "Shop early access",
   cta_url: "/#shop",
-  footer_note: "You're receiving this as an AFRESH Inner Circle member.",
+  footer_note: "You're receiving this as an AFRESH Inner Circle member. Paid members may cancel anytime by replying to this email. All membership fees are non-refundable.",
 };
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -61,6 +62,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export default function AdminVipPanel({ notify }: { notify: Notify }) {
+  const confirmAction = useConfirm();
   const [members, setMembers] = useState<VipMember[]>([]);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -68,6 +70,10 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [memberData, notifData] = await Promise.all([
@@ -94,12 +100,60 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
     notify("Notifications cleared");
   };
 
+  const openCancelForm = (memberId: string) => {
+    setCancelTarget(memberId);
+    setCancelReason("");
+  };
+
+  const cancelMembership = async (member: VipMember) => {
+    const reason = cancelReason.trim();
+    if (reason.length < 10) {
+      notify("Add a cancellation reason (at least 10 characters) for the member email");
+      return;
+    }
+    if (
+      !(await confirmAction({
+        title: "Cancel membership",
+        message: `Cancel ${member.email}'s Inner Circle membership? They will receive your message by email and lose VIP access.`,
+        confirmLabel: "Send cancellation email",
+        cancelLabel: "Keep member",
+        tone: "danger",
+      }))
+    ) {
+      return;
+    }
+
+    setCancelling(true);
+    try {
+      await api<{ email: string }>(`/api/admin/vip-members/${member.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ action: "cancel", reason }),
+      });
+      notify(`Membership cancelled — email sent to ${member.email}`);
+      setCancelTarget(null);
+      setCancelReason("");
+      await load();
+    } catch (e) {
+      notify(e instanceof Error ? e.message : "Could not cancel membership");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const sendCampaign = async () => {
     if (!campaign.subject.trim() || !campaign.headline.trim()) {
       notify("Subject and headline are required");
       return;
     }
-    if (!confirm(`Send subscription email to ${members.filter((m) => m.is_active).length} active VIP members?`)) {
+    const activeCount = members.filter((m) => m.is_active).length;
+    if (
+      !(await confirmAction({
+        title: "Send campaign",
+        message: `Send subscription email to ${activeCount} active VIP member${activeCount === 1 ? "" : "s"}?`,
+        confirmLabel: "Send now",
+        cancelLabel: "Not yet",
+      }))
+    ) {
       return;
     }
     setSending(true);
@@ -114,6 +168,31 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
       notify(e instanceof Error ? e.message : "Send failed");
     } finally {
       setSending(false);
+    }
+  };
+
+  const removeMember = async (member: VipMember) => {
+    if (
+      !(await confirmAction({
+        title: "Remove from system",
+        message: `Permanently delete ${member.email} from VIP records? This cannot be undone.`,
+        confirmLabel: "Remove permanently",
+        cancelLabel: "Keep record",
+        tone: "danger",
+      }))
+    ) {
+      return;
+    }
+
+    setRemovingId(member.id);
+    try {
+      await api<{ email: string }>(`/api/admin/vip-members/${member.id}`, { method: "DELETE" });
+      notify(`${member.email} removed from the system`);
+      await load();
+    } catch (e) {
+      notify(e instanceof Error ? e.message : "Could not remove member");
+    } finally {
+      setRemovingId(null);
     }
   };
 
@@ -161,7 +240,7 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
       <div className={styles.panel}>
         <p className={styles.panelTitle}>Subscription email — send to all VIP</p>
         <p className={styles.panelHint}>
-          Compose your offer (prices, description, perks). Resend delivers to every active member.
+          Compose your offer (prices, description, perks). To every active member.
         </p>
         <div className={styles.formGrid}>
           <div className={`${styles.field} ${styles.fieldFull}`}>
@@ -258,6 +337,11 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
 
       <div className={styles.panel}>
         <p className={styles.panelTitle}>VIP members ({members.length})</p>
+        <p className={styles.panelHint}>
+          Cancel a membership to remove VIP access and send a custom cancellation email. Cancelled records can be
+          permanently removed from the system. Paid members may also cancel themselves by replying to any AFRESH
+          email — membership fees are non-refundable.
+        </p>
         {members.length === 0 ? (
           <p className={styles.empty}>No signups yet — they appear when visitors join on the landing page.</p>
         ) : (
@@ -268,16 +352,91 @@ export default function AdminVipPanel({ notify }: { notify: Notify }) {
                   <th>Email</th>
                   <th>Source</th>
                   <th>Joined</th>
+                  <th>Status</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
-                {members.map((v) => (
-                  <tr key={v.id}>
-                    <td>{v.email}</td>
-                    <td>{v.source}</td>
-                    <td>{new Date(v.joined_at).toLocaleString()}</td>
-                  </tr>
-                ))}
+                {members.map((v) => {
+                  const isActive = v.is_active;
+                  const isCancelling = cancelTarget === v.id;
+
+                  return (
+                    <Fragment key={v.id}>
+                      <tr className={styles.vipMemberRow}>
+                        <td>{v.email}</td>
+                        <td>{v.source}</td>
+                        <td>{new Date(v.joined_at).toLocaleString()}</td>
+                        <td>
+                          <span className={isActive ? styles.vipStatusActive : styles.vipStatusCancelled}>
+                            {isActive ? "Active" : "Cancelled"}
+                          </span>
+                        </td>
+                        <td>
+                          {isActive && !isCancelling ? (
+                            <button
+                              type="button"
+                              className={styles.btnDanger}
+                              onClick={() => openCancelForm(v.id)}
+                            >
+                              Cancel
+                            </button>
+                          ) : !isActive && !isCancelling ? (
+                            <button
+                              type="button"
+                              className={styles.btnDanger}
+                              disabled={removingId === v.id}
+                              onClick={() => void removeMember(v)}
+                            >
+                              {removingId === v.id ? "Removing…" : "Remove"}
+                            </button>
+                          ) : (
+                            <span className={styles.panelHint}>—</span>
+                          )}
+                        </td>
+                      </tr>
+                      {isCancelling && (
+                        <tr>
+                          <td colSpan={5}>
+                            <div className={styles.vipCancelForm}>
+                              <label className={styles.vipCancelFormLabel} htmlFor={`cancel-reason-${v.id}`}>
+                                Cancellation email message
+                              </label>
+                              <textarea
+                                id={`cancel-reason-${v.id}`}
+                                rows={4}
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                                placeholder="Explain why this membership is being cancelled. This text is sent to the member."
+                              />
+                              <div className={styles.actions} style={{ marginTop: 0 }}>
+                                <button
+                                  type="button"
+                                  className={styles.btnGhost}
+                                  disabled={cancelling}
+                                  onClick={() => {
+                                    setCancelTarget(null);
+                                    setCancelReason("");
+                                  }}
+                                >
+                                  Back
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.btnDanger}
+                                  disabled={cancelling || cancelReason.trim().length < 10}
+                                  onClick={() => void cancelMembership(v)}
+                                >
+                                  {cancelling ? "Sending…" : "Send cancellation email"}
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

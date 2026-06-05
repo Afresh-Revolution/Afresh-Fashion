@@ -630,7 +630,7 @@ CREATE TABLE IF NOT EXISTS membership_section (
   description         TEXT NOT NULL,
   signup_placeholder  TEXT NOT NULL DEFAULT 'Your email address',
   signup_button_label TEXT NOT NULL DEFAULT 'Join VIP',
-  footnote            TEXT NOT NULL DEFAULT 'Free to join • No spam • Unsubscribe anytime',
+  footnote            TEXT NOT NULL DEFAULT 'Free to join • Paid members may cancel anytime by replying to our emails • All membership fees are non-refundable',
   background_media_id UUID REFERENCES media_assets(id) ON DELETE SET NULL,
   background_url      TEXT,
   status              content_status NOT NULL DEFAULT 'published',
